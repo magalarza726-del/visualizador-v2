@@ -1,0 +1,3788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizador IO</title>
+  <meta name="description" content="Visualizador interactivo de programación lineal y no lineal para variables, restricciones, gráficas, matriz resumen e historial de Z." />
+  <meta name="theme-color" content="#d0d0d0" />
+  <link rel="icon" href="assets/icono_visualizador_io.png" />
+  <style>:root {
+  --bg: #e7e8eb;
+  --panel: #ededed;
+  --box: #cfcfcf;
+  --box2: #d9d9d9;
+  --line: #242424;
+  --text: #080808;
+  --muted: #555;
+  --dark: #202020;
+  --soft-shadow: 0 14px 30px rgba(0,0,0,.12);
+  --good: #198754;
+  --bad: #c94747;
+  --warn: #b98300;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+button, select, input { font: inherit; }
+button { cursor: pointer; }
+
+.app-shell {
+  width: min(1900px, 100%);
+  margin: 0 auto;
+  padding: 10px 18px 22px;
+}
+
+.top-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  min-height: 44px;
+}
+
+.round-tool {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,.14);
+  background: transparent;
+  font-size: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .18s ease, filter .18s ease;
+}
+.round-tool:hover { transform: scale(1.04); filter: saturate(1.15); }
+
+.hist-tool {
+  min-width: 126px;
+  border: 0;
+  background: #d0d0d0;
+  padding: 8px 12px;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px #aaa;
+  transition: transform .18s ease, background .18s ease;
+}
+.hist-tool:hover { transform: translateY(-1px); background: #dadada; }
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 16px);
+  grid-template-rows: repeat(3, 11px);
+  border: 1px solid #333;
+}
+.mini-grid i { display: block; border-right: 1px solid #444; border-bottom: 1px solid #444; background: #d8d8d8; }
+.mini-grid i:nth-child(-n+3) { background: #111; }
+
+.cards-layout {
+  display: grid;
+  grid-template-columns: minmax(560px, 1fr) minmax(560px, 1.05fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.flip-card {
+  min-height: 760px;
+  perspective: 1700px;
+}
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 760px;
+  transform-style: preserve-3d;
+  transition: transform .48s cubic-bezier(.22,.61,.36,1);
+}
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.card-back { transform: rotateY(180deg); }
+
+.window {
+  background: var(--panel);
+  border: 3px solid var(--line);
+  box-shadow: var(--soft-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.window-head {
+  position: relative;
+  border-bottom: 3px solid var(--line);
+  padding: 12px 18px;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.window-head h1 {
+  margin: 0;
+  font-size: clamp(36px, 4vw, 62px);
+  line-height: .96;
+  font-weight: 950;
+  letter-spacing: -.5px;
+}
+.compact-head h1 { flex: 1; text-align: center; font-size: clamp(36px, 3vw, 50px); }
+.center-head h1 { text-align: center; }
+.big-head { justify-content: center; min-height: 132px; }
+.big-head h1 { text-align: center; max-width: 680px; }
+
+.flip-btn {
+  border: 1px solid #999;
+  background: #d5d5d5;
+  font-weight: 900;
+  padding: 9px 13px;
+  transition: background .18s ease, transform .18s ease;
+  white-space: nowrap;
+}
+.flip-btn:hover { background: #e1e1e1; transform: translateY(-1px); }
+
+.window-body {
+  position: relative;
+  flex: 1;
+  padding: 22px 34px 34px;
+  min-height: 0;
+}
+.scroll-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-color: #5a5a5a #d1d1d1;
+  scrollbar-width: thin;
+}
+.scroll-body::-webkit-scrollbar, .matrix-table-wrap::-webkit-scrollbar, .history-table-wrap::-webkit-scrollbar { width: 16px; height: 16px; }
+.scroll-body::-webkit-scrollbar-track, .matrix-table-wrap::-webkit-scrollbar-track, .history-table-wrap::-webkit-scrollbar-track { background: #d1d1d1; }
+.scroll-body::-webkit-scrollbar-thumb, .matrix-table-wrap::-webkit-scrollbar-thumb, .history-table-wrap::-webkit-scrollbar-thumb { background: #5a5a5a; border: 2px solid #d1d1d1; }
+
+.domain-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 128px;
+}
+.domain-symbol {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 34px;
+  font-weight: 900;
+}
+.switch {
+  width: 54px;
+  height: 28px;
+  border: none;
+  border-radius: 18px;
+  background: #999;
+  padding: 2px;
+  position: relative;
+}
+.switch span {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  transition: transform .18s ease;
+}
+body.real-mode .switch span { transform: translateX(26px); }
+
+.empty-state {
+  color: #666;
+  font-weight: 800;
+  text-align: center;
+  padding: 80px 12px;
+  font-size: 24px;
+}
+.empty-state.hidden { display: none; }
+
+.plus-btn {
+  position: sticky;
+  left: 0;
+  bottom: 0;
+  margin-top: 18px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #5f5f5f;
+  color: white;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .16s ease, background .16s ease;
+}
+.plus-btn:hover { transform: scale(1.05); background: #505050; }
+
+.variables-list {
+  display: grid;
+  gap: 28px;
+  padding: 10px 14px 20px 0;
+}
+.variable-row {
+  display: grid;
+  grid-template-columns: 24px 70px minmax(260px, 1fr) 90px;
+  align-items: center;
+  gap: 16px;
+}
+.color-dot {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #222;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+  padding: 0;
+}
+.color-dot input { opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.variable-name {
+  border: 0;
+  background: transparent;
+  text-align: right;
+  font-size: 34px;
+  font-weight: 950;
+  padding: 0;
+}
+.slider-wrap {
+  position: relative;
+  height: 38px;
+  display: flex;
+  align-items: end;
+}
+.slider-limit {
+  position: absolute;
+  top: -2px;
+  font-size: 14px;
+  font-weight: 900;
+}
+.slider-limit.min { left: 0; }
+.slider-limit.max { right: 0; }
+.smooth-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, #1e1e1e 0%, #1e1e1e var(--pct), #bdbdbd var(--pct), #bdbdbd 100%);
+  border-radius: 99px;
+  outline: none;
+  transition: background .08s linear;
+}
+.smooth-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  background: #1f1f1f;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+.smooth-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: #1f1f1f;
+  border-radius: 50%;
+  border: 0;
+}
+.value-input {
+  width: 90px;
+  border: 1px solid #999;
+  background: #d9d9d9;
+  height: 34px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.model-body { padding: 28px 42px 44px; }
+.objective-row {
+  display: grid;
+  grid-template-columns: 110px 62px minmax(260px,1fr);
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.select-box {
+  height: 42px;
+  background: #d2d2d2;
+  border: 1px solid #9e9e9e;
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+  padding: 0 12px;
+}
+.z-label {
+  font-size: 34px;
+  font-weight: 950;
+}
+.expression-field {
+  min-height: 44px;
+  border: 0;
+  background: #d0d0d0;
+  padding: 10px 16px;
+  text-align: left;
+  font-weight: 900;
+  font-size: 18px;
+  transition: background .15s ease, transform .15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.expression-field:hover { background: #d8d8d8; transform: translateY(-1px); }
+.expression-field.placeholder { color: #111; }
+.sub-title {
+  font-size: 34px;
+  margin: 0 0 20px;
+  font-weight: 950;
+}
+.constraints-list { display: grid; gap: 18px; padding-bottom: 40px; }
+.constraint-block {
+  display: grid;
+  grid-template-columns: 86px minmax(210px, 1.05fr) 86px minmax(230px, 1fr) 42px;
+  gap: 10px;
+  align-items: center;
+}
+.constraint-name-input,
+.rhs-name-input {
+  height: 46px;
+  background: #d0d0d0;
+  border: 1px solid #aaa;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 950;
+  min-width: 0;
+}
+.constraint-name-input { font-size: 26px; }
+.right-side-wrap {
+  display: grid;
+  grid-template-columns: 82px minmax(150px, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.relation-select {
+  height: 46px;
+  background: #d0d0d0;
+  border: 1px solid #aaa;
+  font-size: 20px;
+  font-weight: 950;
+  text-align: center;
+}
+.constraint-rhs,
+.constraint-lhs { height: 46px; min-width: 0; }
+.constraint-lhs { width: 100%; }
+.delete-btn {
+  height: 42px;
+  background: #d5d5d5;
+  border: 1px solid #999;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 22px;
+  align-items: start;
+  padding-bottom: 20px;
+}
+.chart-card {
+  background: #d0d0d0;
+  border: 1px solid #c1c1c1;
+  min-height: 390px;
+  padding: 14px 14px 10px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+.chart-card h3 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.chart-card h3.chart-math-title {
+  font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+  letter-spacing: .2px;
+  line-height: 1.16;
+}
+.chart-card canvas,
+.chart-large-card canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 285px;
+  display: block;
+}
+.status-line {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.badge {
+  border: 1px solid #aaa;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #ededed;
+  font-size: 13px;
+  font-weight: 900;
+}
+.badge.good { color: var(--good); border-color: var(--good); }
+.badge.bad { color: var(--bad); border-color: var(--bad); }
+.badge.warn { color: var(--warn); border-color: var(--warn); }
+
+.objective-chart-body {
+  padding: 28px;
+  display: grid;
+  grid-template-rows: minmax(610px, 1fr) auto;
+  gap: 14px;
+}
+.chart-large-card {
+  background: #d0d0d0;
+  border: 1px solid #c1c1c1;
+  padding: 18px;
+  min-height: 610px;
+}
+.chart-note {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+  z-index: 1000;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+.modal {
+  width: min(1120px, 96vw);
+  max-height: min(860px, 94vh);
+  background: var(--panel);
+  border: 2px solid #222;
+  box-shadow: 0 28px 72px rgba(0,0,0,.28);
+  transform: translateY(12px) scale(.98);
+  transition: transform .22s ease;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.overlay.show .modal { transform: translateY(0) scale(1); }
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #999;
+  background: #d5d5d5;
+  font-size: 24px;
+  font-weight: 900;
+}
+.modal-head {
+  border-bottom: 3px solid #111;
+  padding: 12px 48px 8px;
+  text-align: center;
+}
+.modal-head h1 {
+  margin: 0;
+  font-size: clamp(44px, 5vw, 72px);
+  line-height: .98;
+  font-weight: 950;
+}
+.modal-head.slim h1 { font-size: 54px; }
+.modal-body { overflow: auto; }
+.variable-editor { display: flex; flex-direction: column; min-height: 620px; }
+.editor-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid #222;
+}
+.editor-top > div { padding: 14px 24px 24px; text-align: center; }
+.editor-top h2 { margin: 0; font-size: 28px; font-weight: 950; }
+.editor-top p { margin: 5px 0 0; font-style: italic; font-weight: 800; }
+.preview-box {
+  width: 96px;
+  height: 104px;
+  background: #c7c7c7;
+  margin: 20px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  font-weight: 950;
+}
+.sub-preview {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.sub-preview span {
+  width: 86px;
+  height: 104px;
+  background: #c7c7c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 950;
+}
+.editor-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 14px;
+  border-bottom: 2px solid #222;
+  font-weight: 900;
+}
+.editor-controls input { height: 36px; width: 92px; margin-left: 5px; text-align: center; }
+.editor-controls input[type=color] { padding: 0; width: 46px; }
+.editor-keyboards {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr .8fr;
+  flex: 1;
+  min-height: 260px;
+}
+.editor-keyboards > div { border-right: 2px solid #222; overflow: auto; }
+.editor-keyboards > div:last-child { border-right: none; }
+.editor-keyboards h3, .calc-body h2 {
+  background: #c4c4c4;
+  margin: 0;
+  text-align: center;
+  padding: 7px 0;
+  font-size: 22px;
+  font-weight: 950;
+}
+.key-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; padding: 18px; }
+.number-grid { display: grid; grid-template-columns: repeat(3, 58px); gap: 8px; justify-content: center; padding: 18px; }
+.key, .calc-key {
+  min-height: 36px;
+  background: #f1f1f1;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.const-value {
+  width: 320px;
+  height: 104px;
+  margin-top: 20px;
+  background: #c7c7c7;
+  border: 0;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 950;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid #bbb;
+}
+.modal-actions button, .history-clear {
+  background: #d5d5d5;
+  border: 1px solid #999;
+  padding: 8px 12px;
+  font-weight: 900;
+}
+
+.calculator-modal { width: min(1180px, 97vw); }
+.calc-top { padding: 12px 18px; border-bottom: 2px solid #222; text-align: center; }
+.calc-top p { margin: 0 0 10px; font-weight: 700; }
+.calc-entry-row { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; }
+.calc-entry-row button { background: #d5d5d5; border: 1px solid #bbb; font-weight: 950; }
+.calc-entry {
+  min-height: 54px;
+  background: #cfcfcf;
+  text-align: left;
+  padding: 14px;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 20px;
+  font-weight: 900;
+}
+.calc-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  max-height: 420px;
+  overflow: auto;
+}
+.calc-body section { border-right: 2px solid #222; border-bottom: 2px solid #222; min-height: 285px; }
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 8px; padding: 14px; }
+.calc-numbers { grid-template-columns: repeat(3, 64px); }
+.ops { grid-template-columns: repeat(3, 1fr); }
+
+.matrix-modal { width: min(1120px, 96vw); height: min(760px, 94vh); }
+.matrix-tools {
+  display: grid;
+  gap: 10px;
+  padding: 12px 24px 14px;
+  font-size: 18px;
+  font-weight: 900;
+  border-bottom: 1px solid #bbb;
+}
+.matrix-n-value-row {
+  text-align: center;
+}
+.matrix-n-value-row input {
+  width: 110px;
+  height: 36px;
+  text-align: center;
+  border: 1px solid #999;
+  background: #d9d9d9;
+  font-weight: 900;
+}
+.matrix-n-slider-row {
+  display: grid;
+  grid-template-columns: 72px minmax(180px, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+}
+.slider-limit-label {
+  font-size: 14px;
+  font-weight: 950;
+  color: #333;
+  text-align: center;
+}
+.matrix-table-wrap, .history-table-wrap { flex: 1; overflow: auto; padding: 14px; }
+table.matrix, table.history { border-collapse: collapse; min-width: 620px; background: transparent; }
+table.matrix th, table.matrix td, table.history th, table.history td {
+  border: 3px solid #222;
+  min-width: 100px;
+  height: 64px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 950;
+  padding: 8px;
+}
+table.history th, table.history td { font-size: 18px; min-width: 100px; height: 44px; }
+.matrix-legend { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; padding: 12px; font-weight: 900; border-top: 1px solid #bbb; }
+
+.matrix-auto-note {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #2f2f2f;
+  padding: 0 24px 10px;
+}
+.matrix-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 34px;
+  font-weight: 950;
+  line-height: 1;
+}
+.matrix-symbol.positive, .legend-arrow.positive { color: #1d9c3c; }
+.matrix-symbol.negative, .legend-arrow.negative { color: #d62828; }
+.matrix-symbol.variable, .legend-arrow.variable { color: #111; }
+.matrix-symbol.none, .legend-arrow.none { color: #111; }
+.matrix-symbol.constant, .legend-arrow.constant { color: #1f6feb; }
+.legend-arrow {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+.history-modal { width: min(900px, 94vw); height: min(620px, 94vh); }
+.history-actions { display: flex; justify-content: flex-end; padding: 0 14px 10px; }
+
+@media (max-width: 1220px) {
+  .cards-layout { grid-template-columns: 1fr; }
+  .flip-card, .flip-inner { min-height: 720px; }
+  .objective-chart-body { grid-template-rows: minmax(420px,1fr) auto; }
+  .chart-large-card { min-height: 420px; }
+}
+@media (max-width: 760px) {
+  .app-shell { padding: 8px; }
+  .window-body { padding: 18px; }
+  .window-head { padding: 10px; }
+  .domain-toggle { min-width: auto; }
+  .flip-btn { padding: 7px 8px; }
+  .variable-row { grid-template-columns: 22px 56px 1fr; }
+  .value-input { grid-column: 3; width: 100%; }
+  .objective-row { grid-template-columns: 92px 48px 1fr; }
+  .constraint-block { grid-template-columns: 1fr; }
+  .right-side-wrap { grid-template-columns: 82px 1fr; }
+  .constraint-name-input { text-align: left; padding-left: 12px; }
+  .editor-top, .editor-keyboards, .calc-body { grid-template-columns: 1fr; }
+  .editor-keyboards > div, .calc-body section { border-right: none; }
+}
+
+/* v3.3: restricciones compactas como el boceto original */
+.constraint-block.original-format {
+  display: grid;
+  grid-template-columns: 90px 18px 96px 92px minmax(270px, 1fr) 44px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.constraint-title-wrap {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  min-width: 0;
+}
+.constraint-name-original {
+  height: 46px;
+  border: 0;
+  background: transparent;
+  font-size: 34px;
+  font-weight: 950;
+  text-align: right;
+  min-width: 0;
+  padding: 0 2px;
+}
+.constraint-colon {
+  font-size: 34px;
+  font-weight: 950;
+  text-align: center;
+}
+.value-name-field {
+  height: 46px;
+  min-width: 0;
+  background: #d0d0d0;
+  border: 1px solid #d6d6d6;
+  padding: 8px 12px;
+  text-align: center;
+  font-weight: 950;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background .15s ease, transform .15s ease;
+}
+.value-name-field:hover { background: #d8d8d8; transform: translateY(-1px); }
+.constraint-block.original-format .relation-select {
+  height: 46px;
+  font-size: 18px;
+  font-weight: 950;
+}
+.constraint-block.original-format .expression-field {
+  height: 46px;
+  min-height: 46px;
+}
+
+/* v3.3: calculadora de dos lados, similar al boceto */
+.calculator-modal { width: min(1180px, 97vw); }
+.calc-top p { font-weight: 500; }
+.calc-entry-row.two-sided {
+  grid-template-columns: 44px 190px 1fr 44px;
+}
+.calc-entry-row.single-sided {
+  grid-template-columns: 44px 1fr 44px;
+}
+.calculator-modal.constraint-mode #objectiveCalcEntryRow { display: none; }
+.calculator-modal.objective-mode #constraintCalcEntries { display: none; }
+.calc-entry {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+}
+.calc-entry-left {
+  justify-content: center;
+  text-align: center;
+  font-weight: 950;
+}
+.calc-entry-right { text-align: left; }
+.calc-entry.active {
+  outline: 3px solid rgba(74, 163, 223, .55);
+  outline-offset: -3px;
+  background: #c7c7c7;
+}
+.original-calc-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1.1fr;
+  grid-template-rows: 1fr 1fr;
+  height: min(560px, 58vh);
+}
+.original-calc-layout section {
+  min-height: 0;
+  border-right: 2px solid #222;
+  border-bottom: 2px solid #222;
+}
+.original-calc-layout section h2 {
+  margin: 0;
+  background: #c7c7c7;
+  border-bottom: 0;
+  padding: 8px 4px;
+  text-align: center;
+}
+.calc-variables-section { grid-column: 1; grid-row: 1; }
+.calc-equivalent-section { grid-column: 1; grid-row: 2; }
+.calc-numbers-section { grid-column: 2; grid-row: 1 / span 2; }
+.calc-constants-section { display: none !important; }
+.calc-ops-section { grid-column: 3; grid-row: 1 / span 2; border-right: 0 !important; }
+.calc-help-text {
+  font-size: 15px;
+  text-align: center;
+  margin: 10px 12px 0;
+  line-height: 1.25;
+}
+.original-calc-layout .calc-grid,
+.original-calc-layout .number-grid {
+  padding: 14px;
+}
+.original-calc-layout .ops {
+  grid-template-columns: repeat(3, minmax(62px, 1fr));
+  align-content: start;
+}
+
+@media (max-width: 900px) {
+  .constraint-block.original-format {
+    grid-template-columns: 1fr 18px;
+  }
+  .constraint-block.original-format > *:not(.constraint-title-wrap):not(.constraint-colon) {
+    grid-column: 1 / -1;
+  }
+  .constraint-name-original { text-align: left; }
+  .original-calc-layout { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+  .calc-variables-section, .calc-equivalent-section, .calc-numbers-section, .calc-constants-section, .calc-ops-section {
+    grid-column: auto; grid-row: auto;
+  }
+  .calc-entry-row.two-sided { grid-template-columns: 38px 1fr 38px; }
+  .calc-entry-left, .calc-entry-right { grid-column: 2; }
+}
+
+
+/* v3.4: calculadora sin división visual entre números y constantes */
+.hidden-section { display: none !important; }
+.calc-subtitle {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-weight: 950;
+  padding: 8px 4px 2px;
+  border-top: 1px solid #b8b8b8;
+  margin-top: 6px;
+}
+.calc-subtitle.muted { color: #666; }
+.calc-numbers {
+  grid-template-columns: repeat(3, minmax(58px, 74px));
+  align-content: start;
+}
+.calc-numbers .calc-key { min-height: 42px; }
+.chart-card canvas { min-height: 285px; }
+@media (max-width: 1220px) {
+  .chart-card { min-height: 420px; }
+  .chart-card canvas { min-height: 310px; }
+}
+
+/* v3.5: distribución modular nueva
+   - 2/3 izquierdos: ventana fija de gráficas de restricciones.
+   - 1/3 derecho superior: carta de Z score / resumen de restricciones.
+   - 1/3 derecho inferior: carta de variables / restricciones. */
+.cards-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  height: calc(100vh - 76px);
+  min-height: 920px;
+}
+
+.charts-window {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.z-score-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.model-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.z-score-card,
+.model-card,
+.z-score-card .flip-inner,
+.model-card .flip-inner {
+  min-height: 0;
+  height: 100%;
+}
+
+.z-score-card .window,
+.model-card .window,
+.charts-window {
+  height: 100%;
+}
+
+.z-score-card .window-head,
+.model-card .window-head,
+.charts-window .window-head {
+  min-height: 68px;
+}
+
+.z-score-card .compact-head h1,
+.model-card .compact-head h1,
+.charts-window .compact-head h1 {
+  font-size: clamp(28px, 2.1vw, 40px);
+}
+
+.model-card .big-head {
+  min-height: 78px;
+  padding: 10px 14px;
+}
+.model-card .big-head h1 {
+  font-size: clamp(25px, 2.15vw, 38px);
+}
+
+.model-card .window-body,
+.z-score-card .window-body,
+.charts-scroll-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.charts-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.chart-count-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.small-select {
+  height: 36px;
+  font-size: 14px;
+  padding: 0 8px;
+  width: auto;
+}
+
+.charts-scroll-body {
+  padding: 16px;
+}
+
+.charts-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 28px;
+}
+
+.charts-grid.chart-count-1 { grid-template-columns: 1fr; }
+.charts-grid.chart-count-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.charts-grid.chart-count-9 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.charts-grid.chart-count-16 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.charts-grid.chart-count-25 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.charts-grid.chart-count-1 .chart-card { min-height: 690px; }
+.charts-grid.chart-count-1 .chart-card canvas { min-height: 570px; }
+.charts-grid.chart-count-4 .chart-card { min-height: 420px; }
+.charts-grid.chart-count-4 .chart-card canvas { min-height: 310px; }
+.charts-grid.chart-count-9 .chart-card { min-height: 310px; padding: 10px; }
+.charts-grid.chart-count-9 .chart-card canvas { min-height: 220px; }
+.charts-grid.chart-count-16 .chart-card { min-height: 250px; padding: 8px; }
+.charts-grid.chart-count-16 .chart-card canvas { min-height: 170px; }
+.charts-grid.chart-count-25 .chart-card { min-height: 210px; padding: 7px; }
+.charts-grid.chart-count-25 .chart-card canvas { min-height: 138px; }
+
+.charts-grid.chart-count-16 .chart-card h3,
+.charts-grid.chart-count-25 .chart-card h3 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.charts-grid.chart-count-16 .status-line,
+.charts-grid.chart-count-25 .status-line {
+  gap: 4px;
+  margin-top: 5px;
+}
+.charts-grid.chart-count-16 .badge,
+.charts-grid.chart-count-25 .badge {
+  font-size: 10px;
+  padding: 3px 5px;
+}
+
+.objective-chart-body,
+.summary-chart-body {
+  padding: 14px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.chart-large-card,
+.summary-large-card {
+  background: #d0d0d0;
+  border: 1px solid #c1c1c1;
+  padding: 12px;
+  min-height: 0;
+}
+
+.chart-large-card canvas,
+.summary-large-card canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 285px;
+  display: block;
+}
+
+.summary-status-line {
+  justify-content: center;
+  max-height: 82px;
+  overflow-y: auto;
+}
+
+.model-card .objective-row {
+  grid-template-columns: 86px 48px minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.model-card .select-box { font-size: 18px; }
+.model-card .z-label { font-size: 26px; }
+.model-card .sub-title { font-size: 24px; }
+.model-card .constraint-block.original-format {
+  grid-template-columns: 74px 14px 78px 76px minmax(170px, 1fr) 36px;
+  gap: 6px;
+}
+.model-card .constraint-name-original { font-size: 24px; }
+.model-card .constraint-colon { font-size: 24px; }
+.model-card .value-name-field,
+.model-card .constraint-block.original-format .relation-select,
+.model-card .constraint-block.original-format .expression-field {
+  height: 40px;
+  min-height: 40px;
+  font-size: 14px;
+  padding: 6px 8px;
+}
+.model-card .delete-btn { height: 38px; }
+.model-card .variables-list { gap: 18px; }
+.model-card .variable-row {
+  grid-template-columns: 22px 58px minmax(160px, 1fr) 78px;
+  gap: 10px;
+}
+.model-card .variable-name { font-size: 26px; }
+.model-card .value-input { width: 78px; }
+
+@media (max-width: 1220px) {
+  .cards-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(760px, auto) minmax(460px, auto) minmax(560px, auto);
+    height: auto;
+    min-height: 0;
+  }
+  .charts-window,
+  .z-score-card,
+  .model-card {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 560px;
+  }
+  .charts-grid.chart-count-16,
+  .charts-grid.chart-count-25 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .charts-head { grid-template-columns: 1fr; gap: 8px; }
+  .chart-count-control, .chart-page-control { justify-content: center; }
+  .charts-grid.chart-count-4,
+  .charts-grid.chart-count-9,
+  .charts-grid.chart-count-16,
+  .charts-grid.chart-count-25 { grid-template-columns: 1fr; }
+  .model-card .variable-row { grid-template-columns: 22px 52px 1fr; }
+  .model-card .value-input { grid-column: 3; width: 100%; }
+}
+
+.var-play-btn {
+  width: 38px;
+  height: 34px;
+  border: 1px solid #999;
+  background: #d9d9d9;
+  font-size: 17px;
+  font-weight: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, background .15s ease;
+}
+.var-play-btn:hover { transform: translateY(-1px); background: #e1e1e1; }
+.var-play-btn.playing { background: #bfcfc4; }
+.var-speed-control {
+  display: inline-grid;
+  grid-template-columns: auto 52px 180px;
+  gap: 8px;
+  align-items: center;
+}
+.var-speed-control input[type=range] {
+  width: 180px;
+}
+.calc-entry {
+  align-items: center;
+  gap: 2px;
+  font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+  font-size: 24px;
+  min-height: 58px;
+}
+.calc-entry:focus { outline: 3px solid rgba(74, 163, 223, .70); outline-offset: -3px; }
+.math-token {
+  display: inline-flex;
+  align-items: baseline;
+  min-height: 28px;
+  padding: 0 1px;
+  border-radius: 3px;
+}
+.math-token:hover { background: rgba(255,255,255,.36); }
+.math-sup {
+  font-size: .68em;
+  vertical-align: super;
+  transform: translateY(-.34em);
+}
+.math-fn { font-style: normal; font-weight: 950; }
+.math-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.25em;
+  background: #111;
+  margin: 0 1px;
+  animation: calcBlink 1s steps(1) infinite;
+  vertical-align: -.18em;
+}
+.math-empty { color: #777; font-family: Arial, Helvetica, sans-serif; font-size: 18px; }
+@keyframes calcBlink { 50% { opacity: 0; } }
+.calc-key.wide-key { grid-column: span 2; }
+
+.model-card .variable-row,
+.variable-row {
+  grid-template-columns: 24px 70px minmax(260px, 1fr) 90px 38px;
+}
+.model-card .variable-row {
+  grid-template-columns: 22px 58px minmax(160px, 1fr) 78px 38px;
+}
+@media (max-width: 760px) {
+  .model-card .variable-row,
+  .variable-row { grid-template-columns: 22px 52px 1fr 38px; }
+  .model-card .value-input,
+  .value-input { grid-column: 3; width: 100%; }
+  .var-play-btn { grid-column: 4; grid-row: 2; }
+  .var-speed-control { grid-template-columns: 1fr; justify-items: center; }
+}
+
+
+.chart-page-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 900;
+}
+.chart-page-control button {
+  border: 1px solid #a8a8a8;
+  background: #d7d7d7;
+  border-radius: 8px;
+  min-width: 34px;
+  height: 30px;
+  font-size: 22px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.chart-page-control button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+.chart-page-control span {
+  min-width: 96px;
+  text-align: center;
+}
+.history-browser {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  min-height: 520px;
+  background: #d7d7d7;
+  border: 1px solid #b0b0b0;
+}
+.history-tabs {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding: 8px 8px 0;
+  background: #bfbfbf;
+  border-bottom: 1px solid #909090;
+}
+.history-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 104px;
+  max-width: 180px;
+  height: 34px;
+  padding: 0 8px 0 14px;
+  border: 1px solid #9a9a9a;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  background: #cfcfcf;
+  font-weight: 950;
+  cursor: pointer;
+}
+.history-tab.active {
+  background: #eeeeee;
+  height: 38px;
+}
+.history-tab span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.history-tab-close {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-weight: 950;
+  cursor: pointer;
+}
+.history-tab-close:hover { background: #b9b9b9; }
+.history-tab-header {
+  background: #eeeeee;
+  border-bottom: 1px solid #b4b4b4;
+  padding: 12px 16px;
+  display: grid;
+  gap: 6px;
+}
+.history-tab-header h2 {
+  margin: 0;
+  font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+  font-size: 22px;
+  font-weight: 950;
+}
+.history-restrictions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 78px;
+  overflow: auto;
+}
+.history-restrictions span {
+  background: #d8d8d8;
+  border: 1px solid #b9b9b9;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-family: "Cambria Math", "STIX Two Math", Georgia, serif;
+  font-weight: 800;
+}
+.history-content {
+  overflow: auto;
+  background: #eeeeee;
+}
+.history-empty-tabs {
+  padding: 70px 20px;
+  text-align: center;
+  font-weight: 900;
+  color: #555;
+}
+
+
+.matrix-virtual-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 12px;
+  font-weight: 950;
+}
+.matrix-virtual-controls button {
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  background: #d7d7d7;
+  padding: 7px 10px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.matrix-virtual-controls button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+.matrix-virtual-table {
+  overflow: auto;
+  max-height: 430px;
+}
+.matrix-virtual-table .matrix th,
+.matrix-virtual-table .matrix td {
+  min-width: 74px;
+}
+</style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="top-tools">
+      <button class="round-tool" id="openMatrixBtn" title="Matriz resumen">🔍</button>
+      <button class="hist-tool" id="openHistoryBtn" title="Historial de Z">
+        <span>Historial Z</span>
+        <span class="mini-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </button>
+    </div>
+
+    <main class="cards-layout">
+      <section class="window charts-window" id="restrictionChartsPanel">
+        <header class="window-head compact-head charts-head">
+          <h1>Gráficas de restricciones</h1>
+          <label class="chart-count-control">Mostrar
+            <select id="restrictionChartCount" class="select-box small-select" aria-label="Cantidad de gráficas visibles">
+              <option value="1">1 a la vez</option>
+              <option value="4" selected>4 a la vez</option>
+              <option value="9">9 a la vez</option>
+              <option value="16">16 a la vez</option>
+              <option value="25">25 a la vez</option>
+            </select>
+          </label>
+        </header>
+        <div class="window-body scroll-body charts-scroll-body">
+          <div class="empty-state" id="restrictionChartsEmpty">Las gráficas aparecerán al crear restricciones</div>
+          <div class="charts-grid chart-count-4" id="restrictionChartsGrid"></div>
+        </div>
+      </section>
+
+      <section class="flip-card z-score-card" id="cardZscore">
+        <div class="flip-inner">
+          <article class="window card-face card-front" id="objectiveChartFace">
+            <header class="window-head compact-head center-head">
+              <h1>Z score</h1>
+              <button class="flip-btn" data-flip="cardZscore" type="button">Voltear ↻</button>
+            </header>
+            <div class="window-body objective-chart-body scroll-body">
+              <div class="chart-large-card">
+                <canvas id="objectiveCanvas"></canvas>
+              </div>
+              <div class="chart-note" id="objectiveValueNote">Z = —</div>
+            </div>
+          </article>
+
+          <article class="window card-face card-back" id="restrictionSummaryFace">
+            <header class="window-head compact-head center-head">
+              <h1>Resumen de restricciones</h1>
+              <button class="flip-btn" data-flip="cardZscore" type="button">Voltear ↻</button>
+            </header>
+            <div class="window-body summary-chart-body scroll-body">
+              <div class="summary-large-card">
+                <canvas id="summaryCanvas"></canvas>
+              </div>
+              <div class="status-line summary-status-line" id="summaryRestrictionStatus"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="flip-card model-card" id="cardModel">
+        <div class="flip-inner">
+          <article class="window card-face card-front" id="variablesFace">
+            <header class="window-head compact-head">
+              <div class="domain-toggle" id="domainToggle" title="Cambiar entre enteros y reales">
+                <span class="domain-symbol">ℤ</span>
+                <button class="switch" id="domainSwitch" type="button" aria-label="Cambiar dominio"><span></span></button>
+                <span class="domain-symbol">ℝ</span>
+              </div>
+              <h1>Variables</h1>
+              <button class="flip-btn" data-flip="cardModel" type="button">Voltear ↻</button>
+            </header>
+            <div class="window-body scroll-body">
+              <div class="empty-state" id="varsEmpty">Crea una variable con el botón +</div>
+              <div class="variables-list" id="variablesList"></div>
+              <button class="plus-btn" id="addVariableBtn" type="button">+</button>
+            </div>
+          </article>
+
+          <article class="window card-face card-back" id="modelFace">
+            <header class="window-head big-head">
+              <h1>Objetivo y restricciones</h1>
+              <button class="flip-btn" data-flip="cardModel" type="button">Voltear ↻</button>
+            </header>
+            <div class="window-body model-body scroll-body">
+              <div class="objective-row">
+                <select id="objectiveSense" class="select-box" aria-label="Min o Max">
+                  <option value="Min">Min</option>
+                  <option value="Max">Max</option>
+                </select>
+                <span class="z-label">Z =</span>
+                <button class="expression-field grow" id="objectiveExprField" data-field="objective" type="button">Clic para crear función objetivo</button>
+              </div>
+
+              <h2 class="sub-title">Restricciones</h2>
+              <div class="empty-state model-empty" id="constraintsEmpty">Crea una restricción con el botón +</div>
+              <div id="constraintsList" class="constraints-list"></div>
+              <button class="plus-btn" id="addConstraintBtn" type="button">+</button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="overlay" id="variableModal" aria-hidden="true">
+    <div class="modal variable-modal">
+      <button class="modal-close" data-close="variableModal" type="button">×</button>
+      <header class="modal-head"><h1>Crear/Editar variable</h1></header>
+      <div class="modal-body variable-editor">
+        <section class="editor-top">
+          <div>
+            <h2>Base</h2>
+            <p>(1 caracter permitido no numérico):</p>
+            <div class="preview-box" id="varBasePreview">X</div>
+          </div>
+          <div>
+            <h2>Subíndice</h2>
+            <p>(hasta 3 caracteres permitidos numéricos):</p>
+            <div class="sub-preview"><span id="subSlot1"></span><span id="subSlot2"></span><span id="subSlot3"></span></div>
+          </div>
+        </section>
+        <section class="editor-controls">
+          <label>Mín <input id="varMinInput" type="number" step="0.01" value="0"></label>
+          <label>Máx <input id="varMaxInput" type="number" step="0.01" value="100"></label>
+          <label>Valor <input id="varValueInput" type="number" step="0.01" value="0"></label>
+          <label>Color <input id="varColorInput" type="color" value="#3498db"></label>
+          <label class="var-speed-control">Velocidad <span id="varSpeedLabel">x1.0</span><input id="varSpeedInput" type="range" min="0.1" max="10" step="0.1" value="1"></label>
+        </section>
+        <section class="editor-keyboards">
+          <div><h3>Abecedario</h3><div class="key-grid" id="alphabetKeys"></div></div>
+          <div><h3>Letras griegas</h3><div class="key-grid" id="greekKeys"></div></div>
+          <div><h3>Números</h3><div class="number-grid" id="subNumberKeys"></div></div>
+        </section>
+        <footer class="modal-actions"><button id="deleteVariableBtn" type="button">Eliminar</button><button id="saveVariableBtn" type="button">Guardar</button></footer>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="constantModal" aria-hidden="true">
+    <div class="modal constant-modal">
+      <button class="modal-close" data-close="constantModal" type="button">×</button>
+      <header class="modal-head"><h1>Crear/Editar constante</h1></header>
+      <div class="modal-body variable-editor">
+        <section class="editor-top">
+          <div>
+            <h2>Constante</h2>
+            <p>(hasta 3 caracteres permitido no numéricos):</p>
+            <div class="preview-box" id="constNamePreview">C</div>
+          </div>
+          <div>
+            <h2>Valor</h2>
+            <p>(hasta 10 caracteres numéricos, incluido decimal):</p>
+            <input class="const-value" id="constValueInput" type="text" value="0">
+          </div>
+        </section>
+        <section class="editor-keyboards three">
+          <div><h3>Abecedario</h3><div class="key-grid" id="constAlphabetKeys"></div></div>
+          <div><h3>Letras griegas</h3><div class="key-grid" id="constGreekKeys"></div></div>
+          <div><h3>Números</h3><div class="number-grid" id="constValueKeys"></div></div>
+        </section>
+        <footer class="modal-actions"><button id="deleteConstantBtn" type="button">Eliminar</button><button id="saveConstantBtn" type="button">Guardar</button></footer>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="calculatorModal" aria-hidden="true">
+    <div class="modal calculator-modal">
+      <button class="modal-close" data-close="calculatorModal" type="button">×</button>
+      <header class="modal-head"><h1>Calculadora</h1></header>
+      <div class="calc-top">
+        <p id="calcCaption">Aquí va la expresión a la izquierda y derecha de la igualdad/desigualdad. Las variables, constantes o restricciones se colocan con un clic:</p>
+        <div class="calc-entry-row two-sided" id="constraintCalcEntries">
+          <button id="calcBack" type="button">‹</button>
+          <div class="calc-entry calc-entry-left active" id="calcLeftEntry" data-calc-side="left"></div>
+          <div class="calc-entry calc-entry-right" id="calcRightEntry" data-calc-side="right"></div>
+          <button id="calcSpace" type="button">›</button>
+        </div>
+        <div class="calc-entry-row single-sided" id="objectiveCalcEntryRow">
+          <button id="calcBackObjective" type="button">‹</button>
+          <div id="calcEntry" class="calc-entry active" data-calc-side="right"></div>
+          <button id="calcSpaceObjective" type="button">›</button>
+        </div>
+      </div>
+      <div class="calc-body original-calc-layout">
+        <section class="calc-variables-section"><h2>Variables</h2><div class="calc-grid" id="calcVariables"></div></section>
+        <section class="calc-equivalent-section"><h2>Restricciones equivalentes</h2><p class="calc-help-text">Aquí aparecen las restricciones que tienen la forma R = expresión.</p><div class="calc-grid" id="calcEquivalent"></div></section>
+        <section class="calc-numbers-section"><h2>Números y constantes</h2><div class="number-grid calc-numbers" id="calcNumbers"></div></section>
+        <section class="calc-constants-section hidden-section" aria-hidden="true"><h2>Constantes</h2><div class="calc-grid" id="calcConstants"></div></section>
+        <section class="calc-ops-section"><h2>Operaciones</h2><div class="calc-grid ops" id="calcOps"></div></section>
+      </div>
+      <footer class="modal-actions"><button id="newConstantBtn" type="button">Nueva constante</button><button id="calcClear" type="button">Limpiar</button><button id="saveCalcBtn" type="button">Guardar</button></footer>
+    </div>
+  </div>
+
+  <div class="overlay" id="matrixModal" aria-hidden="true">
+    <div class="modal matrix-modal">
+      <button class="modal-close" data-close="matrixModal" type="button">×</button>
+      <header class="modal-head"><h1>Matriz resumen</h1></header>
+
+      <div class="matrix-table-wrap" id="matrixTableWrap"></div>
+      <footer class="matrix-legend"><span><b class="legend-arrow positive">↑</b> Positivo</span><span><b class="legend-arrow negative">↓</b> Negativo</span><span><b class="legend-arrow variable">↕</b> Variable</span><span><b class="legend-arrow none">•</b> No aporta</span></footer>
+    </div>
+  </div>
+
+  <div class="overlay" id="historyModal" aria-hidden="true">
+    <div class="modal history-modal">
+      <button class="modal-close" data-close="historyModal" type="button">×</button>
+      <header class="modal-head slim"><h1>Historial de Z</h1></header>
+      <div class="history-table-wrap" id="historyTableWrap"></div>
+    </div>
+  </div>
+
+  <script>const COLORS = [
+  '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#e74c3c', '#16a085',
+  '#e67e22', '#2c3e50', '#8e44ad', '#d35400', '#1abc9c', '#c0392b'
+];
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const GREEK = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω'];
+const DIGITS = ['1','2','3','4','5','6','7','8','9','0'];
+
+const state = {
+  domain: 'R',
+  objective: { sense: 'Min', expr: '' },
+  variables: [],
+  constants: [
+    { id: 'c_pi', name: 'π', value: '3.14159265' },
+    { id: 'c_e', name: 'e', value: '2.71828183' }
+  ],
+  constraints: [],
+  history: [],
+  historyKeys: new Set(),
+  historyTabs: [],
+  historyTabCounter: 0,
+  activeHistoryTabId: null,
+  ui: {
+    editVarId: null,
+    editConstId: null,
+    activeField: null,
+    calcBuffer: '',
+    calcLeftBuffer: '',
+    calcRightBuffer: '',
+    calcCursor: 0,
+    calcLeftCursor: 0,
+    calcRightCursor: 0,
+    calcSide: 'right',
+    tempBase: 'X',
+    tempSub: '',
+    tempConstName: 'C',
+    lastSavedKey: null,
+    chartCount: 4,
+    chartStart: 0,
+    pendingChartRender: false,
+    matrixN: 1,
+    matrixRowStart: 0,
+    matrixColStart: 0,
+  }
+};
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function subToUnicode(text) {
+  const map = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'};
+  return String(text ?? '').split('').map(ch => map[ch] || ch).join('');
+}
+
+function displayVar(v) {
+  return `${v.base}${subToUnicode(v.sub)}`;
+}
+
+function parseFinite(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function formatNum(n, maxDigits = 3) {
+  if (!Number.isFinite(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 100000 || (abs > 0 && abs < 0.001)) return n.toExponential(2);
+  return Number(n.toFixed(maxDigits)).toLocaleString('es-CO', { maximumFractionDigits: maxDigits });
+}
+
+function formatInputNum(n, maxDigits = 2) {
+  if (!Number.isFinite(n)) return '';
+  if (state.domain === 'Z') return String(Math.round(n));
+  // Los <input type="number"> necesitan punto decimal, no separador local con coma.
+  // Se recorta a máximo 2 decimales para que ℝ sea legible y no desaparezcan valores.
+  return String(Number(Number(n).toFixed(maxDigits)));
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function stepForDomain() {
+  return state.domain === 'Z' ? 1 : 0.01;
+}
+
+function normalizeValueByDomain(value) {
+  if (state.domain === 'Z') return Math.round(value);
+  if (!Number.isFinite(value)) return 0;
+  return Number(value.toFixed(2));
+}
+
+function tokenRegex(token) {
+  return new RegExp(`\\b${String(token).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
+}
+
+function tokenAppears(token, expr) {
+  return tokenRegex(token).test(String(expr || ''));
+}
+
+function relationSymbol(rel) {
+  if (rel === '<=') return '≤';
+  if (rel === '>=') return '≥';
+  if (rel === '<') return '<';
+  if (rel === '>') return '>';
+  return '=';
+}
+
+function relationOptions(selected) {
+  const opts = [
+    ['<=', '≤'],
+    ['<', '<'],
+    ['=', '='],
+    ['>', '>'],
+    ['>=', '≥'],
+  ];
+  return opts.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+}
+
+function constraintLeftDisplay(c) {
+  return String(c?.lhs || '').trim() || String(c?.valueName || '').trim();
+}
+
+function constraintRightDisplay(c) {
+  return String(c?.rhs || '').trim();
+}
+
+function constraintLeftExpression(c) {
+  const left = String(c?.lhs || '').trim();
+  // Si el usuario dejó el marcador R1/R2/etc. como texto, se trata como vacío para no producir ERROR.
+  if (!left || left === String(c?.valueName || '').trim()) return '0';
+  return left;
+}
+
+function constraintRightExpression(c) {
+  const right = String(c?.rhs || '').trim();
+  return right || '0';
+}
+
+function constraintNetExpression(c) {
+  const left = constraintLeftExpression(c);
+  const right = constraintRightExpression(c);
+  return `( ${left} ) - ( ${right} )`;
+}
+
+
+function prettyMathText(expr) {
+  let out = String(expr || '').trim();
+  if (!out) return '0';
+  state.variables
+    .slice()
+    .sort((a, b) => b.token.length - a.token.length)
+    .forEach(v => {
+      out = out.replace(tokenRegex(v.token), displayVar(v));
+    });
+  const repl = [
+    [/asin\s*\(/gi, 'sen⁻¹('],
+    [/acos\s*\(/gi, 'cos⁻¹('],
+    [/atan\s*\(/gi, 'tg⁻¹('],
+    [/sqrt\s*\(/gi, '√('],
+    [/sin\s*\(/gi, 'sen('],
+    [/cos\s*\(/gi, 'cos('],
+    [/tan\s*\(/gi, 'tg('],
+    [/log\s*\(/gi, 'log₁₀('],
+    [/exp\s*\(/gi, 'exp('],
+  ];
+  repl.forEach(([re, value]) => { out = out.replace(re, value); });
+  out = out
+    .replace(/<=/g, '≤')
+    .replace(/>=/g, '≥')
+    .replace(/\*/g, '·')
+    .replace(/\//g, '÷')
+    .replace(/-/g, '−');
+  return out.replace(/\s+/g, ' ').trim();
+}
+
+function constraintMathLabel(c) {
+  return `${prettyMathText(constraintLeftExpression(c))} ${relationSymbol(c?.relation)} ${prettyMathText(constraintRightExpression(c))}`.trim();
+}
+
+
+function chartVisibleCount() {
+  return Math.max(1, Number(state.ui.chartCount || 4));
+}
+
+function clampChartStart() {
+  const count = chartVisibleCount();
+  const maxStart = Math.max(0, state.constraints.length - count);
+  state.ui.chartStart = clamp(Number(state.ui.chartStart || 0), 0, maxStart);
+  return state.ui.chartStart;
+}
+
+function visibleChartConstraints() {
+  const count = chartVisibleCount();
+  const start = clampChartStart();
+  return state.constraints.slice(start, start + count);
+}
+
+function updateChartPageControls() {
+  const range = document.getElementById('restrictionChartRange');
+  const prev = document.getElementById('restrictionChartPrev');
+  const next = document.getElementById('restrictionChartNext');
+  if (!range || !prev || !next) return;
+  const total = state.constraints.length;
+  if (!total) {
+    range.textContent = '0 / 0';
+    prev.disabled = true;
+    next.disabled = true;
+    return;
+  }
+  const count = chartVisibleCount();
+  const start = clampChartStart();
+  const end = Math.min(total, start + count);
+  range.textContent = `${start + 1}–${end} / ${total}`;
+  prev.disabled = start <= 0;
+  next.disabled = end >= total;
+}
+
+function scheduleRenderAllCharts() {
+  if (state.ui.pendingChartRender) return;
+  state.ui.pendingChartRender = true;
+  requestAnimationFrame(() => {
+    state.ui.pendingChartRender = false;
+    renderAllCharts();
+  });
+}
+
+
+function variableToken(base, sub, oldToken = null) {
+  let b = String(base || 'X')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z]/g, '')
+    .slice(0, 1)
+    .toLowerCase() || 'x';
+  let s = String(sub || '').replace(/\D/g, '').slice(0, 3);
+  let tk = `${b}${s}`;
+  if (oldToken && oldToken === tk) return tk;
+  let i = 1;
+  while (state.variables.some(v => v.token === tk && v.token !== oldToken)) {
+    tk = `${b}${s}${i++}`;
+  }
+  return tk;
+}
+
+function sanitizedConstName(raw) {
+  return String(raw || 'C').replace(/[^A-Za-zα-ωΑ-Ωπφθλμ]/g, '').slice(0, 3) || 'C';
+}
+
+
+function ensureVariablesFromExpressions(...exprs) {
+  const found = new Set();
+  exprs.forEach(expr => {
+    String(expr || '').replace(/\b[xX](\d{1,3})\b/g, (_, sub) => {
+      found.add(`x${sub}`);
+      return '';
+    });
+  });
+  [...found]
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+    .forEach(token => {
+      if (state.variables.some(v => v.token === token)) return;
+      const sub = token.slice(1);
+      state.variables.push({
+        id: `v_auto_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        base: 'X',
+        sub,
+        token,
+        min: 0,
+        max: 100,
+        value: 0,
+        color: COLORS[state.variables.length % COLORS.length],
+        speedMultiplier: 1,
+      });
+    });
+}
+
+function nextVariableDefaults() {
+  const idx = state.variables.length + 1;
+  return {
+    id: `v_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    base: 'X',
+    sub: String(idx),
+    token: `x${idx}`,
+    min: 0,
+    max: 100,
+    value: 0,
+    color: COLORS[(idx - 1) % COLORS.length],
+    speedMultiplier: 1,
+  };
+}
+
+function nextConstraintDefaults() {
+  const idx = state.constraints.reduce((m, c) => Math.max(m, Number(c.index) || 0), 0) + 1;
+  return {
+    id: `r_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    index: idx,
+    name: `r${idx}`,
+    valueName: '',
+    relation: '<=',
+    lhs: '',
+    rhs: '',
+  };
+}
+
+function resequenceConstraints() {
+  // Se conserva cualquier nombre editado por el usuario.
+  state.constraints.forEach((c, i) => {
+    if (!c.index) c.index = i + 1;
+    if (!String(c.name || '').trim()) c.name = `r${c.index}`;
+  });
+}
+
+function replaceTokenEverywhere(oldToken, newToken) {
+  const re = tokenRegex(oldToken);
+  state.objective.expr = state.objective.expr.replace(re, newToken);
+  state.constraints.forEach(c => {
+    c.lhs = c.lhs.replace(re, newToken);
+    c.rhs = c.rhs.replace(re, newToken);
+  });
+}
+
+function setSliderFill(input) {
+  const min = parseFinite(input.min, 0);
+  const max = parseFinite(input.max, 100);
+  const value = parseFinite(input.value, min);
+  const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+  input.style.setProperty('--pct', `${Math.max(0, Math.min(100, pct))}%`);
+}
+
+function preprocessExpression(expr) {
+  let js = String(expr || '').trim();
+  if (!js) return '0';
+
+  // Permite escritura matemática natural desde la calculadora: 5x1, 2(x1+x2), x1(x2+3), etc.
+  js = js
+    .replace(/≤/g, '<=')
+    .replace(/≥/g, '>=')
+    .replace(/[×·]/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/−/g, '-')
+    .replace(/\^/g, '**')
+    .replace(/\bsen\s*\(/gi, 'sin(')
+    .replace(/\btg\s*\(/gi, 'tan(')
+    .replace(/\bln\s*\(/gi, 'ln(')
+    .replace(/\blog10\s*\(/gi, 'log(');
+
+  // Protege los nombres de funciones para no convertir sin(x) en sin*(x).
+  const protectedFns = [];
+  js = js.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|abs|exp|ln|log|min|max|floor|ceil|round)\s*\(/gi, (m, fn) => {
+    const key = `__FN${protectedFns.length}__`;
+    protectedFns.push(`${fn.toLowerCase()}(`);
+    return key;
+  });
+
+  // Número seguido de variable/constante/paréntesis: 5x1, 3π, 2(...)
+  js = js.replace(/(\d+(?:\.\d+)?)(?=\s*[A-Za-zα-ωΑ-Ωπφθλμ(])/g, '$1*');
+  // Paréntesis cerrado seguido de número/variable/paréntesis: (x1+1)x2, (x1+1)2, (x1)(x2)
+  js = js.replace(/\)\s*(?=\d|[A-Za-zα-ωΑ-Ωπφθλμ(])/g, ')*');
+  // Variable/constante seguida de paréntesis: x1(x2+1), π(x1)
+  js = js.replace(/\b([A-Za-zα-ωΑ-Ωπφθλμ][A-Za-z0-9α-ωΑ-Ωπφθλμ]*)\s*(?=\()/g, '$1*');
+
+  protectedFns.forEach((fn, i) => {
+    js = js.replaceAll(`__FN${i}__`, fn);
+  });
+  return js;
+}
+
+function buildScope(overrides = {}) {
+  const scope = {
+    ln: Math.log,
+    log: (x) => Math.log10 ? Math.log10(x) : Math.log(x) / Math.LN10,
+    sin: Math.sin,
+    cos: Math.cos,
+    tan: Math.tan,
+    asin: Math.asin,
+    acos: Math.acos,
+    atan: Math.atan,
+    sqrt: Math.sqrt,
+    abs: Math.abs,
+    exp: Math.exp,
+    floor: Math.floor,
+    ceil: Math.ceil,
+    round: Math.round,
+    min: Math.min,
+    max: Math.max,
+    PI: Math.PI,
+  };
+
+  state.variables.forEach(v => {
+    scope[v.token] = Object.prototype.hasOwnProperty.call(overrides, v.token)
+      ? overrides[v.token]
+      : parseFinite(v.value, 0);
+  });
+  state.constants.forEach(c => {
+    const value = parseFloat(c.value);
+    if (Number.isFinite(value)) scope[c.name] = value;
+  });
+  return scope;
+}
+
+function evalExpr(expr, overrides = {}) {
+  if (!String(expr || '').trim()) return 0;
+  const scope = buildScope(overrides);
+  const js = preprocessExpression(expr);
+  try {
+    return Function('scope', `with(scope){ return (${js}); }`)(scope);
+  } catch (_) {
+    return NaN;
+  }
+}
+
+function relationStatus(lhs, relation, rhs) {
+  const tol = state.domain === 'Z' ? 1e-9 : 1e-6;
+  if (!Number.isFinite(lhs) || !Number.isFinite(rhs)) return { text: 'ERROR', cls: 'bad', ok: false };
+  if (relation === '<=') {
+    if (Math.abs(lhs - rhs) <= tol) return { text: 'ACTIVA', cls: 'warn', ok: true };
+    return lhs < rhs ? { text: 'CUMPLE', cls: 'good', ok: true } : { text: 'VIOLADA', cls: 'bad', ok: false };
+  }
+  if (relation === '>=') {
+    if (Math.abs(lhs - rhs) <= tol) return { text: 'ACTIVA', cls: 'warn', ok: true };
+    return lhs > rhs ? { text: 'CUMPLE', cls: 'good', ok: true } : { text: 'VIOLADA', cls: 'bad', ok: false };
+  }
+  if (relation === '<') {
+    return lhs < rhs - tol ? { text: 'CUMPLE', cls: 'good', ok: true } : { text: 'VIOLADA', cls: 'bad', ok: false };
+  }
+  if (relation === '>') {
+    return lhs > rhs + tol ? { text: 'CUMPLE', cls: 'good', ok: true } : { text: 'VIOLADA', cls: 'bad', ok: false };
+  }
+  return Math.abs(lhs - rhs) <= tol
+    ? { text: 'ACTIVA', cls: 'warn', ok: true }
+    : { text: 'VIOLADA', cls: 'bad', ok: false };
+}
+
+function evaluateConstraint(c) {
+  const lhs = evalExpr(constraintLeftExpression(c));
+  const rhs = evalExpr(constraintRightExpression(c));
+  const status = relationStatus(lhs, c.relation, rhs);
+  return { lhs, rhs, status };
+}
+
+function approxPartial(expr, v) {
+  const x = parseFinite(v.value, 0);
+  const h = Math.max(1e-5, Math.abs(x) * 1e-5, 0.0005);
+  const up = evalExpr(expr, { [v.token]: x + h });
+  const down = evalExpr(expr, { [v.token]: x - h });
+  if (!Number.isFinite(up) || !Number.isFinite(down)) return 0;
+  return (up - down) / (2 * h);
+}
+
+function localContributions(expr) {
+  const total = evalExpr(expr);
+  const parts = [];
+  let explained = 0;
+
+  state.variables.forEach(v => {
+    if (!tokenAppears(v.token, expr)) return;
+    const d = approxPartial(expr, v);
+    const value = d * parseFinite(v.value, 0);
+    if (Math.abs(value) < 1e-10) return;
+    explained += value;
+    parts.push({ id: v.id, token: v.token, label: displayVar(v), value, color: v.color });
+  });
+
+  const residual = (Number.isFinite(total) ? total : 0) - explained;
+  if (Math.abs(residual) > 1e-8 || parts.length === 0) {
+    parts.push({ id: 'residual', token: 'res', label: 'res', value: residual, color: '#999999' });
+  }
+  return { total, parts };
+}
+
+
+
+function stripOuterParens(text) {
+  let s = String(text || '').trim();
+  while (s.startsWith('(') && s.endsWith(')')) {
+    let depth = 0;
+    let ok = true;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (ch === '(') depth += 1;
+      else if (ch === ')') {
+        depth -= 1;
+        if (depth === 0 && i < s.length - 1) { ok = false; break; }
+      }
+    }
+    if (!ok || depth !== 0) break;
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+function normalizeExprForTerms(expr) {
+  return String(expr || '')
+    .replace(/≤/g, '<=')
+    .replace(/≥/g, '>=')
+    .replace(/[×·]/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/−/g, '-');
+}
+
+function splitTopLevelTerms(expr) {
+  const src = normalizeExprForTerms(expr).trim();
+  if (!src) return [];
+  const parts = [];
+  let current = '';
+  let depth = 0;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '(') depth += 1;
+    if (ch === ')') depth = Math.max(0, depth - 1);
+    if ((ch === '+' || ch === '-') && depth === 0) {
+      const prev = src[i - 1];
+      const isUnary = i === 0 || /[+\-*/^(,]/.test(prev || '');
+      if (!isUnary) {
+        if (current.trim()) parts.push(current.trim());
+        current = ch;
+        continue;
+      }
+    }
+    current += ch;
+  }
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+function termSignature(term) {
+  return normalizeExprForTerms(term).replace(/\s+/g, '');
+}
+
+function extractVariablesFromExpr(expr) {
+  const found = [];
+  state.variables.forEach(v => {
+    if (tokenAppears(v.token, expr)) found.push(v);
+  });
+  return found;
+}
+
+function signCodeFromNumber(n) {
+  if (!Number.isFinite(n) || Math.abs(n) <= 1e-10) return 'variable';
+  return n > 0 ? 'positive' : 'negative';
+}
+
+function multiplySignCodes(a, b) {
+  if (a === 'none' || b === 'none') return 'none';
+  if (a === 'variable' || b === 'variable') return 'variable';
+  return a === b ? 'positive' : 'negative';
+}
+
+function intervalSignCode(variable) {
+  let min = parseFinite(variable.min, 0);
+  let max = parseFinite(variable.max, 0);
+  if (min > max) [min, max] = [max, min];
+  const tol = state.domain === 'Z' ? 0 : 1e-10;
+  if (Math.abs(min) <= tol && Math.abs(max) <= tol) return 'none';
+  if (min >= -tol && max > tol) return 'positive';
+  if (max <= tol && min < -tol) return 'negative';
+  if (min < -tol && max > tol) return 'variable';
+  return 'none';
+}
+
+function variablePowerCount(body, token) {
+  const escaped = String(token).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`\\b${escaped}\\b\\s*(?:\\^\\s*([+-]?\\d+))?`, 'g');
+  let total = 0;
+  let match;
+  while ((match = re.exec(String(body || ''))) !== null) {
+    const exp = match[1] ? Number(match[1]) : 1;
+    total += Number.isInteger(exp) && exp > 0 ? exp : 1;
+  }
+  return Math.max(1, total || 1);
+}
+
+function coefficientSignCodeForBody(body) {
+  const overrides = {};
+  state.variables.forEach(v => { overrides[v.token] = 1; });
+  const y = evalExpr(body, overrides);
+  return signCodeFromNumber(y);
+}
+
+function signedTermInfo(term) {
+  let raw = String(term || '').trim();
+  let signCode = 'positive';
+  if (raw.startsWith('+')) raw = raw.slice(1).trim();
+  else if (raw.startsWith('-')) {
+    signCode = 'negative';
+    raw = raw.slice(1).trim();
+  }
+  return { signCode, body: stripOuterParens(raw) };
+}
+
+function classifyTopLevelTermBySignLaw(term) {
+  const { signCode, body } = signedTermInfo(term);
+  if (!body) return 'none';
+  const vars = extractVariablesFromExpr(body);
+  if (!vars.length) return signCode;
+
+  let code = multiplySignCodes(signCode, coefficientSignCodeForBody(body));
+  if (code === 'variable') return 'variable';
+
+  for (const v of vars) {
+    const intervalCode = intervalSignCode(v);
+    if (intervalCode === 'none') return 'none';
+    if (intervalCode === 'variable') return 'variable';
+    const count = variablePowerCount(body, v.token);
+    for (let i = 0; i < count; i++) code = multiplySignCodes(code, intervalCode);
+    if (code === 'variable' || code === 'none') return code;
+  }
+  return code;
+}
+
+function classifyVariableBySignLaw(expr, variable) {
+  if (!String(expr || '').trim()) return 'none';
+  if (!tokenAppears(variable.token, expr)) return 'none';
+  const variableCode = intervalSignCode(variable);
+  if (variableCode === 'none') return 'none';
+  if (variableCode === 'variable') return 'variable';
+
+  const terms = splitTopLevelTerms(expr).filter(term => tokenAppears(variable.token, term));
+  if (!terms.length) return 'none';
+  const results = terms.map(classifyTopLevelTermBySignLaw).filter(code => code !== 'none');
+  if (!results.length) return 'none';
+  if (results.includes('variable')) return 'variable';
+  const uniq = [...new Set(results)];
+  if (uniq.length === 1) return uniq[0];
+  return 'variable';
+}
+
+function signedContributionValue(value, code) {
+  if (!Number.isFinite(value)) return 0;
+  if (code === 'positive') return Math.abs(value);
+  if (code === 'negative') return -Math.abs(value);
+  return value;
+}
+
+function termColor(term) {
+  const vars = extractVariablesFromExpr(term);
+  return vars.length ? (vars[0].color || COLORS[0]) : '#7aa5ff';
+}
+
+function prettyExprLabel(expr) {
+  return prettyMathText(expr);
+}
+
+function isApproximatelyLinearSingleVarTerm(term, token) {
+  const points = [-2, -1, 0, 1, 2];
+  const values = [];
+  const overrides = {};
+  state.variables.forEach(v => {
+    if (v.token !== token) overrides[v.token] = 0;
+  });
+  for (const x of points) {
+    const y = evalExpr(term, { ...overrides, [token]: x });
+    if (!Number.isFinite(y)) return false;
+    values.push(y);
+  }
+  const diffs = [];
+  for (let i = 0; i < values.length - 1; i++) diffs.push(values[i + 1] - values[i]);
+  const minD = Math.min(...diffs);
+  const maxD = Math.max(...diffs);
+  return Math.abs(maxD - minD) <= Math.max(1e-6, Math.abs(maxD) * 1e-5, Math.abs(minD) * 1e-5);
+}
+
+function classifyTermKind(term) {
+  const body = stripOuterParens(String(term || '').trim());
+  const vars = extractVariablesFromExpr(body);
+  const fnNames = body.match(/\b(sin|cos|tan|asin|acos|atan|sqrt|abs|exp|ln|log|min|max|floor|ceil|round)\s*\(/gi) || [];
+  if (!vars.length) return { code: 'constant', caseNumber: 0, typeLabel: 'Constante' };
+  if (!fnNames.length) {
+    if (vars.length === 1 && isApproximatelyLinearSingleVarTerm(body, vars[0].token)) {
+      return { code: 'linear', caseNumber: 1, typeLabel: 'Lineal' };
+    }
+    return { code: 'nonlinear', caseNumber: 2, typeLabel: 'No lineal' };
+  }
+  if (vars.length === 1) return { code: 'functional', caseNumber: 3, typeLabel: 'Funcional' };
+  return { code: 'multifunction', caseNumber: 4, typeLabel: 'Multi-f.' };
+}
+
+function buildGroupedLabel(group) {
+  const pretty = prettyExprLabel(group.bodyLabel);
+  const count = Math.abs(group.count);
+  if (count <= 1) return pretty;
+  const simpleVar = /^\s*[A-Za-z][A-Za-z0-9]*\s*$/.test(group.bodyLabel);
+  return simpleVar ? `${count}${pretty}` : `${count}·(${pretty})`;
+}
+
+function expressionTermContributions(expr) {
+  const total = evalExpr(expr);
+  const terms = splitTopLevelTerms(expr);
+  const grouped = new Map();
+
+  terms.forEach(term => {
+    let raw = String(term || '').trim();
+    if (!raw) return;
+    let sign = 1;
+    if (raw.startsWith('+')) raw = raw.slice(1).trim();
+    else if (raw.startsWith('-')) {
+      sign = -1;
+      raw = raw.slice(1).trim();
+    }
+    raw = stripOuterParens(raw);
+    if (!raw) return;
+    const info = classifyTermKind(raw);
+    const key = `${termSignature(raw)}|${info.code}`;
+    const pieceValue = sign * evalExpr(raw);
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        key,
+        raw,
+        bodyLabel: raw,
+        value: 0,
+        count: 0,
+        color: termColor(raw),
+        typeLabel: info.typeLabel,
+        caseNumber: info.caseNumber,
+        code: info.code,
+        signCodes: new Set(),
+      });
+    }
+    const g = grouped.get(key);
+    if (Number.isFinite(pieceValue)) g.value += pieceValue;
+    g.count += sign;
+    const lawCode = classifyTopLevelTermBySignLaw(term);
+    if (lawCode !== 'none') g.signCodes.add(lawCode);
+  });
+
+  const parts = [...grouped.values()]
+    .map(g => ({
+      id: g.key,
+      token: g.raw,
+      label: buildGroupedLabel(g),
+      value: g.value,
+      color: g.color,
+      typeLabel: g.typeLabel,
+      caseNumber: g.caseNumber,
+      code: g.code,
+      signCode: g.signCodes.has('variable') ? 'variable' : (g.signCodes.size === 1 ? [...g.signCodes][0] : (g.signCodes.size ? 'variable' : 'none')),
+    }))
+    .filter(p => Math.abs(p.value) > 1e-10 || p.code === 'constant');
+
+  if (!parts.length && Number.isFinite(total)) {
+    parts.push({
+      id: 'residual', token: 'residual', label: 'c', value: total, color: '#7aa5ff', typeLabel: 'Constante', caseNumber: 0, code: 'constant', signCode: signCodeFromNumber(total)
+    });
+  }
+
+  return { total, parts };
+}
+
+function objectiveValue() {
+  return evalExpr(state.objective.expr);
+}
+
+
+function prepareCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  const width = Math.max(1, rect.width || canvas.clientWidth || 480);
+  const height = Math.max(1, rect.height || canvas.clientHeight || 300);
+  canvas.width = Math.max(1, Math.floor(width * ratio));
+  canvas.height = Math.max(1, Math.floor(height * ratio));
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  return { ctx, width, height };
+}
+
+function drawEmptyChart(canvas, title = '') {
+  if (!canvas) return;
+  const { ctx, width, height } = prepareCanvas(canvas);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = '#d0d0d0';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#444';
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  if (title) ctx.fillText(title, width / 2, 32);
+  ctx.font = 'bold 15px Arial';
+  ctx.fillText('Sin datos suficientes', width / 2, height / 2);
+}
+
+function drawTermLabel(ctx, cx, top, h, barW, part, compact) {
+  const usableH = h;
+  if (usableH < (compact ? 28 : 34)) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cx - barW / 2, top, barW, h);
+  ctx.clip();
+  ctx.fillStyle = '#111';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const lines = [];
+  const mainLabel = String(part.label || '').slice(0, compact ? 12 : 20);
+  const typeLabel = String(part.typeLabel || '').slice(0, compact ? 10 : 14);
+  if (usableH >= (compact ? 48 : 58)) {
+    lines.push({ text: mainLabel, font: `bold ${compact ? 10 : 12}px Arial` });
+    lines.push({ text: typeLabel, font: `${compact ? 9 : 10}px Arial` });
+  } else {
+    lines.push({ text: typeLabel, font: `bold ${compact ? 9 : 11}px Arial` });
+  }
+
+  const lineGap = compact ? 11 : 14;
+  const startY = top + h / 2 - ((lines.length - 1) * lineGap) / 2;
+  lines.forEach((line, idx) => {
+    ctx.font = line.font;
+    ctx.fillText(line.text, cx, startY + idx * lineGap);
+  });
+  ctx.restore();
+}
+
+function drawContributionChart(canvas, expr, rhsValue = null, title = '', rhsLabel = 'Restricción') {
+  if (!canvas) return;
+  if (!String(expr || '').trim()) return drawEmptyChart(canvas, title);
+
+  const contribution = expressionTermContributions(expr);
+  if (!Number.isFinite(contribution.total)) return drawEmptyChart(canvas, title);
+
+  const { ctx, width, height } = prepareCanvas(canvas);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = '#d0d0d0';
+  ctx.fillRect(0, 0, width, height);
+
+  const compact = width < 360 || height < 260;
+  const margin = {
+    top: title && !compact ? 44 : 18,
+    right: compact ? 48 : 84,
+    bottom: compact ? 34 : 48,
+    left: compact ? 48 : 64,
+  };
+  const plotW = Math.max(80, width - margin.left - margin.right);
+  const plotH = Math.max(70, height - margin.top - margin.bottom);
+  const barW = Math.min(compact ? 46 : 76, plotW / 5);
+  const centers = [margin.left + plotW * 0.18, margin.left + plotW * 0.50, margin.left + plotW * 0.82];
+
+  const chartParts = contribution.parts
+    .map(p => ({ ...p, chartValue: Number.isFinite(p.value) ? p.value : 0 }))
+    .filter(p => Math.abs(p.chartValue) > 1e-10 || p.code === 'constant');
+  const pos = chartParts.filter(p => p.chartValue >= 0 && Math.abs(p.chartValue) > 1e-10);
+  const neg = chartParts.filter(p => p.chartValue < 0 && Math.abs(p.chartValue) > 1e-10);
+  const posSum = pos.reduce((s, p) => s + Math.abs(p.chartValue), 0);
+  const negSum = neg.reduce((s, p) => s + Math.abs(p.chartValue), 0);
+  const total = contribution.total;
+
+  const values = [0, posSum, -negSum, total];
+  if (Number.isFinite(rhsValue)) values.push(rhsValue);
+  let yMin = Math.min(...values);
+  let yMax = Math.max(...values);
+  if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) { yMin = -1; yMax = 1; }
+  if (Math.abs(yMax - yMin) < 1e-8) { yMin -= 1; yMax += 1; }
+  const pad = (yMax - yMin) * 0.20;
+  yMin -= pad;
+  yMax += pad;
+
+  const y = (v) => margin.top + (yMax - v) / (yMax - yMin) * plotH;
+
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 1;
+  ctx.font = `${compact ? 10 : 12}px Arial`;
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#555';
+  for (let i = 0; i <= 5; i++) {
+    const val = yMin + (yMax - yMin) * i / 5;
+    const yy = y(val);
+    ctx.beginPath();
+    ctx.moveTo(margin.left, yy);
+    ctx.lineTo(width - margin.right, yy);
+    ctx.stroke();
+    if (!compact || i % 2 === 0) ctx.fillText(formatNum(val), margin.left - 7, yy + 4);
+  }
+
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(margin.left, y(0));
+  ctx.lineTo(width - margin.right, y(0));
+  ctx.stroke();
+
+  if (Number.isFinite(rhsValue)) {
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(margin.left, y(rhsValue));
+    ctx.lineTo(width - margin.right, y(rhsValue));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (!compact) {
+      ctx.fillStyle = '#222';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 12px Arial';
+      const rhsLabelText = String(rhsLabel || '').trim();
+      const rhsValueText = formatNum(rhsValue);
+      const compactNumericLabel = rhsLabelText && !Number.isNaN(Number(rhsLabelText.replace(',', '.')));
+      const lineText = (!rhsLabelText || compactNumericLabel || rhsLabelText === rhsValueText) ? rhsValueText : `${rhsLabelText} ${rhsValueText}`;
+      ctx.fillText(lineText, width - margin.right + 6, y(rhsValue) + 4);
+    }
+  }
+
+  function drawSegment(cx, from, to, part, hatch = false) {
+    const top = Math.min(y(from), y(to));
+    const h = Math.max(1, Math.abs(y(from) - y(to)));
+    ctx.fillStyle = part.color || '#999';
+    ctx.fillRect(cx - barW / 2, top, barW, h);
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1.3;
+    ctx.strokeRect(cx - barW / 2, top, barW, h);
+    if (hatch) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx - barW / 2, top, barW, h);
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1;
+      for (let x0 = -h; x0 < barW + h; x0 += 9) {
+        ctx.beginPath();
+        ctx.moveTo(cx - barW / 2 + x0, top + h);
+        ctx.lineTo(cx - barW / 2 + x0 + h, top);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    drawTermLabel(ctx, cx, top, h, barW, part, compact);
+  }
+
+  let cursor = 0;
+  pos.forEach(p => {
+    const amount = Math.abs(p.chartValue);
+    drawSegment(centers[0], cursor, cursor + amount, p, false);
+    cursor += amount;
+  });
+  if (!pos.length) drawSegment(centers[0], 0, 0, { label: '0', typeLabel: '—', color: '#b7b7b7' }, false);
+
+  cursor = 0;
+  neg.forEach(p => {
+    const amount = -Math.abs(p.chartValue);
+    drawSegment(centers[1], cursor, cursor + amount, p, true);
+    cursor += amount;
+  });
+  if (!neg.length) drawSegment(centers[1], 0, 0, { label: '0', typeLabel: '—', color: '#b7b7b7' }, false);
+
+  drawSegment(centers[2], 0, total, { label: 'Total', typeLabel: 'Total', color: '#8fbdf2' }, false);
+
+  ctx.fillStyle = '#111';
+  ctx.font = `bold ${compact ? 10 : 13}px Arial`;
+  ctx.textAlign = 'center';
+  ['Positivos', 'Negativos', 'Total'].forEach((t, i) => ctx.fillText(t, centers[i], height - (compact ? 10 : 14)));
+  if (title && !compact) {
+    ctx.font = 'bold 18px Cambria Math, STIX Two Math, Georgia, serif';
+    ctx.fillText(title, width / 2, 24);
+  }
+}
+
+function drawRestrictionSummaryChart(canvas) {
+  if (!canvas) return;
+  if (!state.constraints.length) return drawEmptyChart(canvas, 'Resumen de restricciones');
+
+  const rows = state.constraints.map(c => {
+    const total = evalExpr(constraintRightExpression(c));
+    const restriction = evalExpr(constraintLeftExpression(c));
+    const ev = evaluateConstraint(c);
+    return {
+      c,
+      label: c.name || c.valueName || 'R',
+      total,
+      restriction,
+      status: ev.status,
+    };
+  }).filter(r => Number.isFinite(r.total) || Number.isFinite(r.restriction));
+
+  if (!rows.length) return drawEmptyChart(canvas, 'Resumen de restricciones');
+
+  const { ctx, width, height } = prepareCanvas(canvas);
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = '#d0d0d0';
+  ctx.fillRect(0, 0, width, height);
+
+  const compact = width < 380 || height < 280;
+  const margin = {
+    top: compact ? 30 : 44,
+    right: compact ? 24 : 36,
+    bottom: compact ? 44 : 58,
+    left: compact ? 46 : 62,
+  };
+  const plotW = Math.max(80, width - margin.left - margin.right);
+  const plotH = Math.max(70, height - margin.top - margin.bottom);
+
+  const values = [0];
+  rows.forEach(r => {
+    if (Number.isFinite(r.total)) values.push(r.total);
+    if (Number.isFinite(r.restriction)) values.push(r.restriction);
+  });
+  let yMin = Math.min(...values);
+  let yMax = Math.max(...values);
+  if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) { yMin = -1; yMax = 1; }
+  if (Math.abs(yMax - yMin) < 1e-8) { yMin -= 1; yMax += 1; }
+  const pad = (yMax - yMin) * 0.16;
+  yMin -= pad;
+  yMax += pad;
+  const y = (v) => margin.top + (yMax - v) / (yMax - yMin) * plotH;
+  const x = (i) => margin.left + (rows.length === 1 ? plotW / 2 : (plotW * i / (rows.length - 1)));
+  const gap = rows.length <= 1 ? plotW : plotW / rows.length;
+  const barW = Math.max(14, Math.min(compact ? 34 : 54, gap * 0.44));
+
+  ctx.strokeStyle = '#8d8d8d';
+  ctx.lineWidth = 1;
+  ctx.font = `${compact ? 10 : 12}px Arial`;
+  ctx.fillStyle = '#555';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 5; i++) {
+    const val = yMin + (yMax - yMin) * i / 5;
+    const yy = y(val);
+    ctx.beginPath();
+    ctx.moveTo(margin.left, yy);
+    ctx.lineTo(width - margin.right, yy);
+    ctx.stroke();
+    if (!compact || i % 2 === 0) ctx.fillText(formatNum(val), margin.left - 7, yy + 4);
+  }
+
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(margin.left, y(0));
+  ctx.lineTo(width - margin.right, y(0));
+  ctx.stroke();
+
+  rows.forEach((r, i) => {
+    const cx = x(i);
+    const top = Math.min(y(0), y(r.total));
+    const h = Math.max(1, Math.abs(y(r.total) - y(0)));
+    ctx.fillStyle = '#18c6b7';
+    ctx.fillRect(cx - barW / 2, top, barW, h);
+    ctx.strokeStyle = '#177e77';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(cx - barW / 2, top, barW, h);
+    ctx.save();
+    ctx.translate(cx, height - margin.bottom + 17);
+    if (rows.length > 7) ctx.rotate(-Math.PI / 5);
+    ctx.fillStyle = '#111';
+    ctx.font = `bold ${compact ? 10 : 12}px Arial`;
+    ctx.textAlign = rows.length > 7 ? 'right' : 'center';
+    ctx.fillText(r.label, 0, 0);
+    ctx.restore();
+  });
+
+  ctx.beginPath();
+  rows.forEach((r, i) => {
+    const px = x(i);
+    const py = y(r.restriction);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = '#5b6470';
+  ctx.lineWidth = compact ? 2 : 2.6;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  rows.forEach((r, i) => {
+    const px = x(i);
+    const py = y(r.restriction);
+    ctx.beginPath();
+    ctx.arc(px, py, compact ? 4 : 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#5b6470';
+    ctx.fill();
+    ctx.strokeStyle = '#f8f8f8';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    if (!compact && rows.length <= 9) {
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(formatNum(r.restriction), px, py - 9);
+      ctx.fillText(formatNum(r.total), px, y(r.total) - 6);
+    }
+  });
+
+  if (!compact) {
+    ctx.fillStyle = '#111';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Resumen de restricciones', width / 2, 24);
+
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'left';
+    const lx = margin.left;
+    const ly = margin.top - 13;
+    ctx.fillStyle = '#18c6b7';
+    ctx.fillRect(lx, ly - 9, 14, 10);
+    ctx.fillStyle = '#111';
+    ctx.fillText('Totales', lx + 20, ly);
+    ctx.strokeStyle = '#5b6470';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(lx + 94, ly - 4);
+    ctx.lineTo(lx + 124, ly - 4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(lx + 109, ly - 4, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#5b6470';
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.fillText('Restricciones', lx + 132, ly);
+  }
+}
+
+function renderAllCharts() {
+  const objCanvas = document.getElementById('objectiveCanvas');
+  drawContributionChart(objCanvas, state.objective.expr, null, 'GRÁFICA DE FUNCIÓN OBJETIVO');
+  const z = objectiveValue();
+  const zNote = document.getElementById('objectiveValueNote');
+  if (zNote) zNote.textContent = `Z = ${formatNum(z)}`;
+
+  state.constraints.forEach(c => {
+    const canvas = document.getElementById(`chart_${c.id}`);
+    const threshold = evalExpr(constraintLeftExpression(c));
+    const rightExpr = constraintRightExpression(c);
+    drawContributionChart(canvas, rightExpr, threshold, '', constraintLeftDisplay(c));
+    const ev = evaluateConstraint(c);
+    const delta = ev.rhs - ev.lhs;
+    const status = document.getElementById(`status_${c.id}`);
+    if (status) {
+      const leftLabel = constraintLeftDisplay(c) || 'Lado izq.';
+      status.innerHTML = `
+        <span class="badge ${ev.status.cls}">${ev.status.text}</span>
+        <span class="badge">${escapeHtml(leftLabel)} ${formatNum(ev.lhs)}</span>
+        <span class="badge">Total ${formatNum(ev.rhs)}</span>
+        <span class="badge">Δ ${formatNum(delta)}</span>
+      `;
+    }
+  });
+
+  drawRestrictionSummaryChart(document.getElementById('summaryCanvas'));
+  const summaryStatus = document.getElementById('summaryRestrictionStatus');
+  if (summaryStatus) {
+    summaryStatus.innerHTML = state.constraints.map(c => {
+      const ev = evaluateConstraint(c);
+      return `<span class="badge ${ev.status.cls}">${escapeHtml(c.name)}: ${ev.status.text}</span>`;
+    }).join('') || '<span class="badge">Sin restricciones</span>';
+  }
+}
+
+function currentPointKey() {
+  return state.variables
+    .map(v => `${v.token}:${Number(parseFinite(v.value, 0)).toFixed(state.domain === 'Z' ? 0 : 4)}`)
+    .join('|');
+}
+
+function currentModelKey() {
+  return JSON.stringify({
+    domain: state.domain,
+    objective: {
+      sense: state.objective.sense,
+      expr: String(state.objective.expr || '').trim(),
+    },
+    constraints: state.constraints.map(c => ({
+      lhs: String(c.lhs || '').trim(),
+      relation: c.relation || '=',
+      rhs: String(c.rhs || '').trim(),
+    })),
+  });
+}
+
+function nextHistoryTabName() {
+  state.historyTabCounter = Number(state.historyTabCounter || 0) + 1;
+  return `Z${String(state.historyTabCounter).padStart(3, '0')}`;
+}
+
+function buildHistoryTabSnapshot(modelKey) {
+  return {
+    id: `hz_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    name: nextHistoryTabName(),
+    modelKey,
+    objectiveSense: state.objective.sense,
+    objectiveHeader: `${state.objective.sense} Z = ${prettyMathText(state.objective.expr || '0')}`,
+    restrictionsHeader: state.constraints.map((c, i) => `${c.name || (i + 1)}: ${constraintMathLabel(c)}`),
+    variables: state.variables.map(v => ({ token: v.token, label: displayVar(v) })),
+    rows: [],
+    rowKeys: new Set(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+
+function getHistoryTabById(id) {
+  return state.historyTabs.find(t => t.id === id) || null;
+}
+
+function getActiveHistoryTab() {
+  let tab = getHistoryTabById(state.activeHistoryTabId);
+  if (!tab && state.historyTabs.length) {
+    tab = state.historyTabs[state.historyTabs.length - 1];
+    state.activeHistoryTabId = tab.id;
+  }
+  return tab;
+}
+
+function ensureHistoryTabForCurrentModel() {
+  const modelKey = currentModelKey();
+  let tab = state.historyTabs.find(t => t.modelKey === modelKey);
+  if (!tab) {
+    tab = buildHistoryTabSnapshot(modelKey);
+    state.historyTabs.push(tab);
+    state.activeHistoryTabId = tab.id;
+  }
+  if (!(tab.rowKeys instanceof Set)) tab.rowKeys = new Set((tab.rows || []).map(r => r.key));
+  return tab;
+}
+
+function maybeAutoSaveHistory() {
+  if (!state.variables.length || !state.constraints.length || !String(state.objective.expr || '').trim()) return;
+  const ok = state.constraints.every(c => evaluateConstraint(c).status.ok);
+  if (!ok) return;
+
+  const z = objectiveValue();
+  if (!Number.isFinite(z)) return;
+
+  const tab = ensureHistoryTabForCurrentModel();
+  const key = currentPointKey();
+  if (!key || tab.rowKeys.has(key)) return;
+
+  const row = {
+    key,
+    Z: z,
+    values: tab.variables.map(spec => {
+      const v = state.variables.find(item => item.token === spec.token);
+      return v ? parseFinite(v.value, 0) : NaN;
+    }),
+  };
+  tab.rowKeys.add(key);
+  tab.rows.push(row);
+  tab.updatedAt = Date.now();
+
+  // Compatibilidad con tablas antiguas internas.
+  state.history = tab.rows;
+  state.historyKeys = tab.rowKeys;
+  renderHistoryTable();
+}
+
+function clearHistory() {
+  const tab = getActiveHistoryTab();
+  if (!tab) return;
+  tab.rows = [];
+  tab.rowKeys = new Set();
+  renderHistoryTable();
+}
+
+function deleteHistoryRow(key) {
+  const tab = getActiveHistoryTab();
+  if (!tab) return;
+  tab.rows = tab.rows.filter(r => r.key !== key);
+  tab.rowKeys = new Set(tab.rows.map(r => r.key));
+  renderHistoryTable();
+}
+
+function closeHistoryTab(id) {
+  const index = state.historyTabs.findIndex(t => t.id === id);
+  if (index < 0) return;
+  const tab = state.historyTabs[index];
+  if (!window.confirm(`¿Cerrar la pestaña ${tab.name}?`)) return;
+  state.historyTabs.splice(index, 1);
+  if (state.activeHistoryTabId === id) {
+    const next = state.historyTabs[index] || state.historyTabs[index - 1] || null;
+    state.activeHistoryTabId = next ? next.id : null;
+  }
+  renderHistoryTable();
+}
+
+function sortedHistoryRows(tab = getActiveHistoryTab()) {
+  if (!tab) return [];
+  const direction = tab.objectiveSense === 'Max' ? -1 : 1;
+  return [...(tab.rows || [])].sort((a, b) => {
+    const az = Number(a.Z);
+    const bz = Number(b.Z);
+    if (!Number.isFinite(az) && !Number.isFinite(bz)) return 0;
+    if (!Number.isFinite(az)) return 1;
+    if (!Number.isFinite(bz)) return -1;
+    return direction * (az - bz);
+  });
+}
+
+function renderHistoryTable() {
+  const wrap = document.getElementById('historyTableWrap');
+  if (!wrap) return;
+
+  if (!state.historyTabs.length) {
+    wrap.innerHTML = '<div class="history-browser"><div class="history-tabs"></div><div class="history-empty-tabs">Aún no hay pestañas. Se creará Z001 cuando una combinación cumpla todas las restricciones.</div></div>';
+    return;
+  }
+
+  const active = getActiveHistoryTab();
+  const headers = ['Z', ...(active?.variables || []).map(v => v.label), ''];
+  let html = '<div class="history-browser">';
+  html += '<div class="history-tabs">';
+  state.historyTabs.forEach(tab => {
+    html += `<div class="history-tab ${tab.id === active.id ? 'active' : ''}" data-history-tab="${escapeHtml(tab.id)}" role="button" tabindex="0" title="${escapeHtml(tab.objectiveHeader)}"><span>${escapeHtml(tab.name)}</span><button class="history-tab-close" data-close-history-tab="${escapeHtml(tab.id)}" type="button" aria-label="Cerrar ${escapeHtml(tab.name)}">×</button></div>`;
+  });
+  html += '</div>';
+
+  html += '<div class="history-tab-header">';
+  html += `<h2>${escapeHtml(active.objectiveHeader)}</h2>`;
+  html += '<div class="history-restrictions">';
+  (active.restrictionsHeader || []).forEach(item => { html += `<span>${escapeHtml(item)}</span>`; });
+  html += '</div></div>';
+
+  html += '<div class="history-content">';
+  html += '<table class="history"><thead><tr>';
+  html += headers.map(h => `<th>${escapeHtml(h)}</th>`).join('');
+  html += '</tr></thead><tbody>';
+
+  const rows = sortedHistoryRows(active);
+  if (!rows.length) {
+    html += `<tr><td colspan="${headers.length}">—</td></tr>`;
+  } else {
+    rows.forEach(row => {
+      html += `<tr><td>${formatNum(row.Z)}</td>`;
+      (active.variables || []).forEach((spec, idx) => {
+        html += `<td>${formatNum(row.values[idx])}</td>`;
+      });
+      html += `<td><button class="delete-btn" data-delete-history="${escapeHtml(row.key)}">×</button></td></tr>`;
+    });
+  }
+  html += `<tr><td colspan="${headers.length}"><button class="history-clear" id="clearHistoryFromTable" type="button">Limpiar tabla</button></td></tr>`;
+  html += '</tbody></table></div></div>';
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('[data-history-tab]').forEach(btn => {
+    const activate = () => {
+      state.activeHistoryTabId = btn.dataset.historyTab;
+      renderHistoryTable();
+    };
+    btn.addEventListener('click', activate);
+    btn.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        activate();
+      }
+    });
+  });
+  wrap.querySelectorAll('[data-close-history-tab]').forEach(btn => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      closeHistoryTab(btn.dataset.closeHistoryTab);
+    });
+  });
+  wrap.querySelectorAll('[data-delete-history]').forEach(btn => {
+    btn.addEventListener('click', () => deleteHistoryRow(btn.dataset.deleteHistory));
+  });
+  const clear = document.getElementById('clearHistoryFromTable');
+  if (clear) clear.addEventListener('click', clearHistory);
+}
+
+function classifyVariableInExpression(expr, variable) {
+  return classifyVariableBySignLaw(expr, variable);
+}
+
+function matrixSymbolHtml(code) {
+  const map = {
+    positive: '<span class="matrix-symbol positive" title="Positivo">↑</span>',
+    negative: '<span class="matrix-symbol negative" title="Negativo">↓</span>',
+    variable: '<span class="matrix-symbol variable" title="Variable">↕</span>',
+    none: '<span class="matrix-symbol none" title="No aporta">•</span>',
+  };
+  return map[code] || map.none;
+}
+
+function clampMatrixViewport() {
+  const rowSize = 40;
+  const colSize = 40;
+  state.ui.matrixRowStart = clamp(Number(state.ui.matrixRowStart || 0), 0, Math.max(0, state.constraints.length - rowSize));
+  state.ui.matrixColStart = clamp(Number(state.ui.matrixColStart || 0), 0, Math.max(0, state.variables.length - colSize));
+  return { rowStart: state.ui.matrixRowStart, colStart: state.ui.matrixColStart, rowSize, colSize };
+}
+
+function matrixRangeLabel(start, size, total) {
+  if (!total) return '0 / 0';
+  const end = Math.min(total, start + size);
+  return `${start + 1}–${end} / ${total}`;
+}
+
+function renderMatrix() {
+  const wrap = document.getElementById('matrixTableWrap');
+  if (!state.variables.length || !state.constraints.length) {
+    wrap.innerHTML = '<div class="empty-state">Crea variables y restricciones para ver la matriz</div>';
+    return;
+  }
+
+  const { rowStart, colStart, rowSize, colSize } = clampMatrixViewport();
+  const rows = state.constraints.slice(rowStart, rowStart + rowSize);
+  const cols = state.variables.slice(colStart, colStart + colSize);
+
+  let html = '<div class="matrix-virtual-controls">';
+  html += `<button data-matrix-page="row-prev" type="button" ${rowStart <= 0 ? 'disabled' : ''}>Filas ↑</button>`;
+  html += `<span>Restricciones ${matrixRangeLabel(rowStart, rowSize, state.constraints.length)}</span>`;
+  html += `<button data-matrix-page="row-next" type="button" ${rowStart + rowSize >= state.constraints.length ? 'disabled' : ''}>Filas ↓</button>`;
+  html += `<button data-matrix-page="col-prev" type="button" ${colStart <= 0 ? 'disabled' : ''}>Columnas ←</button>`;
+  html += `<span>Variables ${matrixRangeLabel(colStart, colSize, state.variables.length)}</span>`;
+  html += `<button data-matrix-page="col-next" type="button" ${colStart + colSize >= state.variables.length ? 'disabled' : ''}>Columnas →</button>`;
+  html += '</div>';
+
+  html += '<div class="matrix-virtual-table"><table class="matrix"><thead><tr><th></th>';
+  cols.forEach(v => { html += `<th>${escapeHtml(displayVar(v))}</th>`; });
+  html += '</tr></thead><tbody>';
+  rows.forEach((c, localIndex) => {
+    const restrictionNumber = Number.isFinite(Number(c.index)) ? Number(c.index) : (rowStart + localIndex + 1);
+    html += `<tr><td>${escapeHtml(restrictionNumber)} :</td>`;
+    const expr = constraintRightExpression(c);
+    cols.forEach(v => {
+      html += `<td>${matrixSymbolHtml(classifyVariableInExpression(expr, v))}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('[data-matrix-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.matrixPage;
+      if (action === 'row-prev') state.ui.matrixRowStart -= rowSize;
+      if (action === 'row-next') state.ui.matrixRowStart += rowSize;
+      if (action === 'col-prev') state.ui.matrixColStart -= colSize;
+      if (action === 'col-next') state.ui.matrixColStart += colSize;
+      renderMatrix();
+    });
+  });
+}
+
+function openOverlay(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  el.setAttribute('aria-hidden', 'false');
+}
+
+function closeOverlay(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('show');
+  el.setAttribute('aria-hidden', 'true');
+}
+
+function closeAllOverlays() {
+  document.querySelectorAll('.overlay.show').forEach(el => closeOverlay(el.id));
+}
+
+function fillSubSlots(sub) {
+  const chars = String(sub || '').slice(0, 3).split('');
+  document.getElementById('subSlot1').textContent = chars[0] || '';
+  document.getElementById('subSlot2').textContent = chars[1] || '';
+  document.getElementById('subSlot3').textContent = chars[2] || '';
+}
+
+function openVariableEditor(id = null) {
+  state.ui.editVarId = id;
+  const v = id ? state.variables.find(x => x.id === id) : nextVariableDefaults();
+  state.ui.tempBase = v.base;
+  state.ui.tempSub = v.sub;
+  document.getElementById('varBasePreview').textContent = v.base;
+  fillSubSlots(v.sub);
+  document.getElementById('varMinInput').value = v.min;
+  document.getElementById('varMaxInput').value = v.max;
+  document.getElementById('varValueInput').value = v.value;
+  document.getElementById('varColorInput').value = v.color;
+  const speed = clamp(parseFinite(v.speedMultiplier, 1), 0.1, 10);
+  document.getElementById('varSpeedInput').value = String(speed);
+  document.getElementById('varSpeedLabel').textContent = `x${Number(speed).toFixed(1)}`;
+  document.getElementById('deleteVariableBtn').style.display = id ? 'inline-block' : 'none';
+  openOverlay('variableModal');
+}
+
+function saveVariable() {
+  const old = state.ui.editVarId ? state.variables.find(v => v.id === state.ui.editVarId) : null;
+  let min = parseFinite(document.getElementById('varMinInput').value, 0);
+  let max = parseFinite(document.getElementById('varMaxInput').value, 100);
+  if (min > max) [min, max] = [max, min];
+  let value = normalizeValueByDomain(parseFinite(document.getElementById('varValueInput').value, 0));
+  value = clamp(value, min, max);
+  const color = document.getElementById('varColorInput').value || COLORS[state.variables.length % COLORS.length];
+  const speedMultiplier = clamp(parseFinite(document.getElementById('varSpeedInput').value, 1), 0.1, 10);
+  const base = state.ui.tempBase || 'X';
+  const sub = String(state.ui.tempSub || '').replace(/\D/g, '').slice(0, 3);
+
+  if (old) {
+    const oldToken = old.token;
+    const newToken = variableToken(base, sub, oldToken);
+    Object.assign(old, { base, sub, token: newToken, min, max, value, color, speedMultiplier });
+    if (oldToken !== newToken) replaceTokenEverywhere(oldToken, newToken);
+  } else {
+    const v = nextVariableDefaults();
+    const token = variableToken(base, sub, null);
+    Object.assign(v, { base, sub, token, min, max, value, color, speedMultiplier });
+    state.variables.push(v);
+  }
+  closeOverlay('variableModal');
+  renderAll();
+}
+
+function deleteVariable() {
+  if (!state.ui.editVarId) return;
+  stopVariablePlayback(state.ui.editVarId);
+  state.variables = state.variables.filter(v => v.id !== state.ui.editVarId);
+  closeOverlay('variableModal');
+  renderAll();
+}
+
+function openConstantEditor(id = null) {
+  state.ui.editConstId = id;
+  const c = id ? state.constants.find(x => x.id === id) : { name: 'C', value: '0' };
+  state.ui.tempConstName = c.name;
+  document.getElementById('constNamePreview').textContent = c.name;
+  document.getElementById('constValueInput').value = c.value;
+  document.getElementById('deleteConstantBtn').style.display = id ? 'inline-block' : 'none';
+  openOverlay('constantModal');
+}
+
+function saveConstant() {
+  const name = sanitizedConstName(state.ui.tempConstName);
+  const value = String(document.getElementById('constValueInput').value || '0').slice(0, 10);
+  if (state.ui.editConstId) {
+    const c = state.constants.find(x => x.id === state.ui.editConstId);
+    if (c) Object.assign(c, { name, value });
+  } else {
+    state.constants.push({ id: `c_${Date.now()}`, name, value });
+  }
+  closeOverlay('constantModal');
+  renderAll();
+}
+
+function deleteConstant() {
+  if (!state.ui.editConstId) return;
+  state.constants = state.constants.filter(c => c.id !== state.ui.editConstId);
+  closeOverlay('constantModal');
+  renderAll();
+}
+
+function openCalculator(field, preferredSide = 'right') {
+  state.ui.activeField = field;
+  state.ui.calcSide = preferredSide || 'right';
+  state.ui.calcLeftBuffer = '';
+  state.ui.calcRightBuffer = '';
+  state.ui.calcBuffer = '';
+  state.ui.calcCursor = 0;
+  state.ui.calcLeftCursor = 0;
+  state.ui.calcRightCursor = 0;
+
+  const modal = document.querySelector('#calculatorModal .calculator-modal');
+  modal.classList.toggle('constraint-mode', String(field || '').startsWith('constraint:'));
+  modal.classList.toggle('objective-mode', field === 'objective');
+
+  if (field === 'objective') {
+    state.ui.calcBuffer = state.objective.expr || '';
+    state.ui.calcCursor = state.ui.calcBuffer.length;
+    state.ui.calcSide = 'right';
+    document.getElementById('calcCaption').textContent = 'Calculadora científica con cursor. Inserta variables, constantes, funciones y operadores con notación matemática.';
+  } else if (field.startsWith('constraint:')) {
+    const c = state.constraints.find(c => c.id === field.split(':')[1]);
+    state.ui.calcLeftBuffer = c ? constraintLeftDisplay(c) : '';
+    state.ui.calcRightBuffer = c ? String(c.rhs || '') : '';
+    state.ui.calcLeftCursor = state.ui.calcLeftBuffer.length;
+    state.ui.calcRightCursor = state.ui.calcRightBuffer.length;
+    document.getElementById('calcCaption').textContent = 'Calculadora científica con cursor para ambos lados de la restricción.';
+  }
+
+  syncCalcEntries();
+  renderCalculatorContent();
+  openOverlay('calculatorModal');
+  setTimeout(() => focusActiveCalcEntry(), 0);
+}
+
+function activeCalcPair() {
+  if (state.ui.activeField === 'objective') return { bufferKey: 'calcBuffer', cursorKey: 'calcCursor', entryId: 'calcEntry' };
+  if (state.ui.calcSide === 'left') return { bufferKey: 'calcLeftBuffer', cursorKey: 'calcLeftCursor', entryId: 'calcLeftEntry' };
+  return { bufferKey: 'calcRightBuffer', cursorKey: 'calcRightCursor', entryId: 'calcRightEntry' };
+}
+
+function getActiveCalcBuffer() {
+  return String(state.ui[activeCalcPair().bufferKey] || '');
+}
+
+function getActiveCalcCursor() {
+  const buffer = getActiveCalcBuffer();
+  return clamp(parseFinite(state.ui[activeCalcPair().cursorKey], buffer.length), 0, buffer.length);
+}
+
+function setActiveCalcCursor(pos) {
+  const pair = activeCalcPair();
+  const buffer = String(state.ui[pair.bufferKey] || '');
+  state.ui[pair.cursorKey] = clamp(Number(pos), 0, buffer.length);
+}
+
+function setActiveCalcBuffer(buffer, cursor = null) {
+  const pair = activeCalcPair();
+  state.ui[pair.bufferKey] = String(buffer || '');
+  state.ui[pair.cursorKey] = cursor === null ? state.ui[pair.bufferKey].length : clamp(Number(cursor), 0, state.ui[pair.bufferKey].length);
+}
+
+function focusActiveCalcEntry() {
+  const el = document.getElementById(activeCalcPair().entryId);
+  if (el) el.focus({ preventScroll: true });
+}
+
+function matchVariableAt(expr, index) {
+  const rest = String(expr || '').slice(index);
+  return state.variables
+    .slice()
+    .sort((a, b) => b.token.length - a.token.length)
+    .find(v => rest.startsWith(v.token));
+}
+
+function matchFunctionAt(expr, index) {
+  const entries = [
+    ['asin', 'sen⁻¹'], ['acos', 'cos⁻¹'], ['atan', 'tg⁻¹'],
+    ['sqrt', '√'], ['sin', 'sen'], ['cos', 'cos'], ['tan', 'tg'],
+    ['ln', 'ln'], ['log', 'log₁₀'], ['abs', 'abs'], ['exp', 'e^'],
+    ['floor', '⌊ ⌋'], ['ceil', '⌈ ⌉'], ['round', 'round'], ['min', 'min'], ['max', 'max']
+  ];
+  const rest = String(expr || '').slice(index).toLowerCase();
+  return entries.find(([raw]) => rest.startsWith(raw));
+}
+
+function escapeAttrNum(n) {
+  return String(Math.max(0, Number(n) || 0));
+}
+
+function mathToken(html, cursor, cls = '') {
+  return `<span class="math-token ${cls}" data-cursor="${escapeAttrNum(cursor)}">${html}</span>`;
+}
+
+function renderMathInputHTML(expr, cursor) {
+  const source = String(expr || '');
+  const safeCursor = clamp(Number(cursor), 0, source.length);
+  let html = '';
+  if (!source) {
+    return '<span class="math-cursor"></span><span class="math-empty">escribe aquí</span>';
+  }
+
+  for (let i = 0; i < source.length;) {
+    if (safeCursor === i) html += '<span class="math-cursor"></span>';
+
+    const v = matchVariableAt(source, i);
+    if (v && (safeCursor <= i || safeCursor >= i + v.token.length)) {
+      html += mathToken(escapeHtml(displayVar(v)), i + v.token.length, 'math-var');
+      i += v.token.length;
+      continue;
+    }
+
+    const fn = matchFunctionAt(source, i);
+    if (fn && (safeCursor <= i || safeCursor >= i + fn[0].length)) {
+      html += mathToken(`<span class="math-fn">${escapeHtml(fn[1])}</span>`, i + fn[0].length, 'math-fn-token');
+      i += fn[0].length;
+      continue;
+    }
+
+    const ch = source[i];
+    if (ch === '^' && i + 1 < source.length) {
+      let j = i + 1;
+      let sup = '';
+      if (source[j] === '(') {
+        let depth = 0;
+        while (j < source.length) {
+          const c = source[j];
+          if (c === '(') depth += 1;
+          if (c === ')') depth -= 1;
+          sup += c;
+          j += 1;
+          if (depth === 0) break;
+        }
+        sup = sup.replace(/^\(/, '').replace(/\)$/, '');
+      } else {
+        while (j < source.length && /[A-Za-z0-9_.α-ωΑ-Ωπφθλμ]/.test(source[j])) {
+          sup += source[j];
+          j += 1;
+        }
+        if (!sup) { sup = source[j] || ''; j += sup ? 1 : 0; }
+      }
+      html += mathToken(`<sup class="math-sup">${escapeHtml(prettyExprLabel(sup))}</sup>`, j, 'math-power');
+      i = j;
+      continue;
+    }
+
+    const display = {
+      '*': '×', '/': '÷', '-': '−', ' ': '&nbsp;', '<': '&lt;', '>': '&gt;'
+    }[ch] || escapeHtml(ch);
+    html += mathToken(display, i + 1);
+    i += 1;
+  }
+  if (safeCursor === source.length) html += '<span class="math-cursor"></span>';
+  return html;
+}
+
+function attachMathCursorEvents() {
+  document.querySelectorAll('.calc-entry').forEach(entry => {
+    entry.tabIndex = 0;
+    entry.querySelectorAll('[data-cursor]').forEach(token => {
+      token.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setCalcSide(entry.dataset.calcSide === 'left' ? 'left' : 'right', false);
+        setActiveCalcCursor(Number(token.dataset.cursor));
+        syncCalcEntries();
+        focusActiveCalcEntry();
+      });
+    });
+    entry.onclick = (event) => {
+      if (event.target.closest('[data-cursor]')) return;
+      setCalcSide(entry.dataset.calcSide === 'left' ? 'left' : 'right', false);
+      setActiveCalcCursor(getActiveCalcBuffer().length);
+      syncCalcEntries();
+      focusActiveCalcEntry();
+    };
+  });
+}
+
+function syncCalcEntries() {
+  const objectiveEntry = document.getElementById('calcEntry');
+  const leftEntry = document.getElementById('calcLeftEntry');
+  const rightEntry = document.getElementById('calcRightEntry');
+
+  objectiveEntry.innerHTML = renderMathInputHTML(state.ui.calcBuffer || '', state.ui.calcCursor || 0);
+  leftEntry.innerHTML = renderMathInputHTML(state.ui.calcLeftBuffer || '', state.ui.calcLeftCursor || 0);
+  rightEntry.innerHTML = renderMathInputHTML(state.ui.calcRightBuffer || '', state.ui.calcRightCursor || 0);
+
+  [objectiveEntry, leftEntry, rightEntry].forEach(el => el.classList.remove('active'));
+  if (state.ui.activeField === 'objective') objectiveEntry.classList.add('active');
+  else if (state.ui.calcSide === 'left') leftEntry.classList.add('active');
+  else rightEntry.classList.add('active');
+
+  attachMathCursorEvents();
+}
+
+function setCalcSide(side, doSync = true) {
+  state.ui.calcSide = side === 'left' ? 'left' : 'right';
+  if (doSync) syncCalcEntries();
+}
+
+function insertCalc(text) {
+  const buffer = getActiveCalcBuffer();
+  const cursor = getActiveCalcCursor();
+  const inserted = String(text || '');
+  setActiveCalcBuffer(buffer.slice(0, cursor) + inserted + buffer.slice(cursor), cursor + inserted.length);
+  syncCalcEntries();
+  focusActiveCalcEntry();
+}
+
+function moveCalcCursor(delta) {
+  setActiveCalcCursor(getActiveCalcCursor() + delta);
+  syncCalcEntries();
+  focusActiveCalcEntry();
+}
+
+function backspaceCalc() {
+  const buffer = getActiveCalcBuffer();
+  const cursor = getActiveCalcCursor();
+  if (cursor <= 0) return;
+  setActiveCalcBuffer(buffer.slice(0, cursor - 1) + buffer.slice(cursor), cursor - 1);
+  syncCalcEntries();
+  focusActiveCalcEntry();
+}
+
+function deleteForwardCalc() {
+  const buffer = getActiveCalcBuffer();
+  const cursor = getActiveCalcCursor();
+  if (cursor >= buffer.length) return;
+  setActiveCalcBuffer(buffer.slice(0, cursor) + buffer.slice(cursor + 1), cursor);
+  syncCalcEntries();
+  focusActiveCalcEntry();
+}
+
+function clearActiveCalc() {
+  setActiveCalcBuffer('', 0);
+  syncCalcEntries();
+  focusActiveCalcEntry();
+}
+
+function saveCalc() {
+  const field = state.ui.activeField;
+  if (field === 'objective') {
+    state.objective.expr = String(state.ui.calcBuffer || '').trim();
+    ensureVariablesFromExpressions(state.objective.expr);
+  } else if (field?.startsWith('constraint:')) {
+    const c = state.constraints.find(x => x.id === field.split(':')[1]);
+    if (c) {
+      let left = String(state.ui.calcLeftBuffer || '').trim();
+      let right = String(state.ui.calcRightBuffer || '').trim();
+      if (left === String(c.valueName || '').trim()) left = '';
+      c.lhs = left;
+      c.rhs = right;
+      if (left && /^[A-Za-zα-ωΑ-Ω][A-Za-zα-ωΑ-Ω0-9]{0,2}$/.test(left) && !state.variables.some(v => v.token === left)) {
+        c.valueName = left;
+        c.lhs = '';
+      }
+      ensureVariablesFromExpressions(c.lhs, c.rhs);
+    }
+  }
+  closeOverlay('calculatorModal');
+  renderAll();
+}
+
+function renderCalculatorContent() {
+  const vars = document.getElementById('calcVariables');
+  vars.innerHTML = state.variables.map(v => `<button class="calc-key variable-calc-key" style="--key-color:${escapeHtml(v.color)}" data-insert="${escapeHtml(v.token)}" type="button">${escapeHtml(displayVar(v))}</button>`).join('')
+    + '<button class="calc-key" id="calcAddVariable" type="button">+</button>';
+
+  const nums = document.getElementById('calcNumbers');
+  const numberButtons = ['7','8','9','4','5','6','1','2','3','0','.','⌫']
+    .map(n => `<button class="calc-key" data-number="${n}" type="button">${n}</button>`).join('');
+  const constantButtons = state.constants.length
+    ? `<div class="calc-subtitle">Constantes</div>` + state.constants
+        .map(c => `<button class="calc-key" data-insert="${escapeHtml(c.name)}" data-edit-const="${c.id}" type="button">${escapeHtml(c.name)}</button>`).join('')
+    : '<div class="calc-subtitle muted">Sin constantes</div>';
+  nums.innerHTML = numberButtons + constantButtons + '<button class="calc-key" id="calcAddConstantInline" type="button">+</button>';
+
+  const ops = document.getElementById('calcOps');
+  const opList = [
+    ['+', '+'], ['−', '-'], ['×', '*'], ['÷', '/'], ['(', '('], [')', ')'],
+    ['x²', '^2'], ['xʸ', '^'], ['√', 'sqrt('], ['π', 'π'], ['e', 'e'], [',', ','],
+    ['sen', 'sin('], ['cos', 'cos('], ['tg', 'tan('], ['sen⁻¹', 'asin('], ['cos⁻¹', 'acos('], ['tg⁻¹', 'atan('],
+    ['ln', 'ln('], ['log₁₀', 'log('], ['abs', 'abs('], ['eˣ', 'exp('], ['min', 'min('], ['max', 'max('],
+    ['⌊x⌋', 'floor('], ['⌈x⌉', 'ceil('], ['round', 'round(']
+  ];
+  ops.innerHTML = opList.map(([label, text]) => `<button class="calc-key" data-insert="${escapeHtml(text)}" type="button">${label}</button>`).join('');
+
+  const consts = document.getElementById('calcConstants');
+  if (consts) consts.innerHTML = '';
+
+  const eq = document.getElementById('calcEquivalent');
+  const equalConstraints = state.constraints.filter(c => c.relation === '=' && String(c.rhs || '').trim());
+  eq.innerHTML = equalConstraints.length
+    ? equalConstraints.map(c => `<button class="calc-key" data-insert="(${escapeHtml(constraintRightExpression(c))})" type="button">${escapeHtml(c.valueName || c.name)}</button>`).join('')
+    : '<span class="empty-state" style="font-size:16px;padding:20px;">—</span>';
+
+  document.querySelectorAll('[data-insert]').forEach(btn => btn.addEventListener('click', () => insertCalc(btn.dataset.insert)));
+  document.querySelectorAll('[data-number]').forEach(btn => btn.addEventListener('click', () => {
+    if (btn.dataset.number === '⌫') backspaceCalc();
+    else insertCalc(btn.dataset.number);
+  }));
+  const addVar = document.getElementById('calcAddVariable');
+  if (addVar) addVar.addEventListener('click', () => openVariableEditor());
+  const addConst = document.getElementById('calcAddConstant');
+  if (addConst) addConst.addEventListener('click', () => openConstantEditor());
+  const addConstInline = document.getElementById('calcAddConstantInline');
+  if (addConstInline) addConstInline.addEventListener('click', () => openConstantEditor());
+  document.querySelectorAll('[data-edit-const]').forEach(btn => btn.addEventListener('dblclick', () => openConstantEditor(btn.dataset.editConst)));
+}
+
+function handleCalculatorKey(event) {
+  const modal = document.getElementById('calculatorModal');
+  if (!modal?.classList.contains('show')) return false;
+  if (document.getElementById('variableModal')?.classList.contains('show') || document.getElementById('constantModal')?.classList.contains('show')) return false;
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target?.tagName)) return false;
+  if (event.ctrlKey || event.metaKey || event.altKey) return false;
+
+  if (event.key === 'ArrowLeft') { event.preventDefault(); moveCalcCursor(-1); return true; }
+  if (event.key === 'ArrowRight') { event.preventDefault(); moveCalcCursor(1); return true; }
+  if (event.key === 'Backspace') { event.preventDefault(); backspaceCalc(); return true; }
+  if (event.key === 'Delete') { event.preventDefault(); deleteForwardCalc(); return true; }
+  if (event.key === 'Enter') { event.preventDefault(); saveCalc(); return true; }
+  if (event.key.length === 1 && /^[0-9A-Za-z+\-*/^().,\s]$/.test(event.key)) {
+    event.preventDefault();
+    insertCalc(event.key === ' ' ? ' ' : event.key);
+    return true;
+  }
+  return false;
+}
+
+function bootModalKeyboards() {
+  document.getElementById('alphabetKeys').innerHTML = ALPHABET.map(ch => `<button class="key" data-base="${ch}" type="button">${ch}</button>`).join('');
+  document.getElementById('greekKeys').innerHTML = GREEK.map(ch => `<button class="key" data-base="${ch}" type="button">${ch}</button>`).join('');
+  document.getElementById('subNumberKeys').innerHTML = DIGITS.map(ch => `<button class="key" data-sub="${ch}" type="button">${ch}</button>`).join('') + '<button class="key" data-sub="back" type="button">⌫</button>';
+
+  document.querySelectorAll('[data-base]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.ui.tempBase = btn.dataset.base;
+      document.getElementById('varBasePreview').textContent = state.ui.tempBase;
+    });
+  });
+  document.querySelectorAll('[data-sub]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.sub === 'back') state.ui.tempSub = state.ui.tempSub.slice(0, -1);
+      else if (state.ui.tempSub.length < 3) state.ui.tempSub += btn.dataset.sub;
+      fillSubSlots(state.ui.tempSub);
+    });
+  });
+
+  document.getElementById('constAlphabetKeys').innerHTML = ALPHABET.map(ch => `<button class="key" data-cbase="${ch}" type="button">${ch}</button>`).join('');
+  document.getElementById('constGreekKeys').innerHTML = GREEK.map(ch => `<button class="key" data-cbase="${ch}" type="button">${ch}</button>`).join('');
+  document.getElementById('constValueKeys').innerHTML = ['7','8','9','4','5','6','1','2','3','0','.','⌫'].map(ch => `<button class="key" data-cvalue="${ch}" type="button">${ch}</button>`).join('');
+
+  document.querySelectorAll('[data-cbase]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.ui.tempConstName = sanitizedConstName(btn.dataset.cbase);
+      document.getElementById('constNamePreview').textContent = state.ui.tempConstName;
+    });
+  });
+  document.querySelectorAll('[data-cvalue]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('constValueInput');
+      if (btn.dataset.cvalue === '⌫') input.value = input.value.slice(0, -1);
+      else input.value += btn.dataset.cvalue;
+    });
+  });
+}
+
+const variablePlayers = new Map();
+
+function isVariablePlaying(id) {
+  return variablePlayers.has(id);
+}
+
+function refreshVariablePlayButton(id) {
+  const btn = document.querySelector(`[data-var-play="${id}"]`);
+  if (!btn) return;
+  const playing = isVariablePlaying(id);
+  btn.classList.toggle('playing', playing);
+  btn.textContent = playing ? '⏸' : '▶';
+  btn.title = playing ? 'Pausar recorrido' : 'Recorrer intervalo';
+}
+
+function scheduleVariablePlayback(id) {
+  const player = variablePlayers.get(id);
+  const v = state.variables.find(x => x.id === id);
+  if (!player || !v) return;
+  if (player.timer) clearTimeout(player.timer);
+
+  let min = parseFinite(v.min, 0);
+  let max = parseFinite(v.max, 100);
+  if (min > max) [min, max] = [max, min];
+  const interval = Math.abs(max - min);
+  const step = stepForDomain();
+  const multiplier = clamp(parseFinite(v.speedMultiplier, 1), 0.1, 10);
+  const speedUnitsPerSecond = interval * 0.05 * multiplier;
+
+  if (interval <= 0 || step <= 0 || speedUnitsPerSecond <= 0) {
+    stopVariablePlayback(id);
+    return;
+  }
+
+  const delay = Math.max(1, (step / speedUnitsPerSecond) * 1000);
+  player.timer = setTimeout(() => {
+    const current = clamp(parseFinite(v.value, min), min, max);
+    let next = normalizeValueByDomain(current + step);
+    if (next > max + 1e-12) next = min;
+    updateVariableValue(id, next, 'play');
+    scheduleVariablePlayback(id);
+  }, delay);
+}
+
+function startVariablePlayback(id) {
+  if (isVariablePlaying(id)) return;
+  const v = state.variables.find(x => x.id === id);
+  if (!v) return;
+  variablePlayers.set(id, { timer: null });
+  refreshVariablePlayButton(id);
+  scheduleVariablePlayback(id);
+}
+
+function stopVariablePlayback(id) {
+  const player = variablePlayers.get(id);
+  if (player?.timer) clearTimeout(player.timer);
+  variablePlayers.delete(id);
+  refreshVariablePlayButton(id);
+}
+
+function toggleVariablePlayback(id) {
+  if (isVariablePlaying(id)) stopVariablePlayback(id);
+  else startVariablePlayback(id);
+}
+
+function renderVariables() {
+  const list = document.getElementById('variablesList');
+  const empty = document.getElementById('varsEmpty');
+  empty.classList.toggle('hidden', state.variables.length > 0);
+  const step = stepForDomain();
+
+  list.innerHTML = state.variables.map(v => {
+    const min = parseFinite(v.min, 0);
+    const max = parseFinite(v.max, 100);
+    const value = clamp(parseFinite(v.value, 0), min, max);
+    const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
+    return `
+      <div class="variable-row" data-var-row="${v.id}">
+        <label class="color-dot" style="background:${escapeHtml(v.color)}" title="Cambiar color">
+          <input type="color" value="${escapeHtml(v.color)}" data-var-color="${v.id}">
+        </label>
+        <button class="variable-name" data-edit-var="${v.id}" type="button">${escapeHtml(displayVar(v))}</button>
+        <div class="slider-wrap">
+          <span class="slider-limit min">${formatNum(min)}</span>
+          <span class="slider-limit max">${formatNum(max)}</span>
+          <input class="smooth-slider" style="--pct:${pct}%" type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-var-slider="${v.id}">
+        </div>
+        <input class="value-input" type="number" step="${step}" value="${formatInputNum(value, state.domain === 'Z' ? 0 : 2)}" data-var-input="${v.id}">
+        <button class="var-play-btn ${isVariablePlaying(v.id) ? 'playing' : ''}" data-var-play="${v.id}" type="button" title="Recorrer intervalo">${isVariablePlaying(v.id) ? '⏸' : '▶'}</button>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-edit-var]').forEach(btn => btn.addEventListener('click', () => openVariableEditor(btn.dataset.editVar)));
+  list.querySelectorAll('[data-var-color]').forEach(input => input.addEventListener('input', () => {
+    const v = state.variables.find(x => x.id === input.dataset.varColor);
+    if (!v) return;
+    v.color = input.value;
+    input.closest('.color-dot').style.background = input.value;
+    scheduleRenderAllCharts();
+  }));
+  list.querySelectorAll('[data-var-slider]').forEach(input => {
+    input.addEventListener('input', () => updateVariableValue(input.dataset.varSlider, input.value, 'slider'));
+    setSliderFill(input);
+  });
+  list.querySelectorAll('[data-var-input]').forEach(input => input.addEventListener('input', () => updateVariableValue(input.dataset.varInput, input.value, 'input')));
+  list.querySelectorAll('[data-var-play]').forEach(btn => {
+    btn.addEventListener('click', () => toggleVariablePlayback(btn.dataset.varPlay));
+    refreshVariablePlayButton(btn.dataset.varPlay);
+  });
+}
+
+function updateVariableValue(id, raw, source) {
+  const v = state.variables.find(x => x.id === id);
+  if (!v) return;
+  let next = normalizeValueByDomain(parseFinite(raw, v.value));
+  next = clamp(next, parseFinite(v.min, 0), parseFinite(v.max, 100));
+  v.value = next;
+
+  const row = document.querySelector(`[data-var-row="${id}"]`);
+  if (row) {
+    const slider = row.querySelector('[data-var-slider]');
+    const box = row.querySelector('[data-var-input]');
+    if (slider) {
+      slider.value = String(next);
+      setSliderFill(slider);
+    }
+    if (box && source !== 'input') box.value = formatInputNum(next, state.domain === 'Z' ? 0 : 2);
+  }
+  scheduleRenderAllCharts();
+  if (document.getElementById('matrixModal')?.classList.contains('show')) renderMatrix();
+  maybeAutoSaveHistory();
+}
+
+function renderObjectiveAndConstraints() {
+  document.getElementById('objectiveSense').value = state.objective.sense;
+  const obj = document.getElementById('objectiveExprField');
+  obj.textContent = state.objective.expr || 'Clic para crear función objetivo';
+  obj.classList.toggle('placeholder', !state.objective.expr);
+
+  const list = document.getElementById('constraintsList');
+  const empty = document.getElementById('constraintsEmpty');
+  empty.classList.toggle('hidden', state.constraints.length > 0);
+
+  list.innerHTML = state.constraints.map(c => `
+    <div class="constraint-block original-format" data-constraint="${c.id}">
+      <div class="constraint-title-wrap">
+        <input class="constraint-name-original" value="${escapeHtml(c.name)}" data-constraint-name="${c.id}" aria-label="Nombre de restricción">
+      </div>
+      <div class="constraint-colon">:</div>
+      <button class="value-name-field" data-constraint-calculator="${c.id}" data-preferred-side="left" type="button">${escapeHtml(constraintLeftDisplay(c))}</button>
+      <select class="relation-select" data-relation="${c.id}" aria-label="Símbolo de restricción">
+        ${relationOptions(c.relation)}
+      </select>
+      <button class="expression-field constraint-expression-original" data-constraint-calculator="${c.id}" data-preferred-side="right" type="button">${escapeHtml(constraintRightDisplay(c))}</button>
+      <button class="delete-btn" data-delete-constraint="${c.id}" type="button">×</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-constraint-calculator]').forEach(btn => {
+    btn.addEventListener('click', () => openCalculator(`constraint:${btn.dataset.constraintCalculator}`, btn.dataset.preferredSide || 'right'));
+  });
+  list.querySelectorAll('[data-relation]').forEach(select => select.addEventListener('change', () => {
+    const c = state.constraints.find(x => x.id === select.dataset.relation);
+    if (!c) return;
+    c.relation = select.value;
+    scheduleRenderAllCharts();
+    maybeAutoSaveHistory();
+  }));
+  list.querySelectorAll('[data-constraint-name]').forEach(input => input.addEventListener('input', () => {
+    const c = state.constraints.find(x => x.id === input.dataset.constraintName);
+    if (!c) return;
+    c.name = input.value.trim() || `r${c.index || ''}`;
+    scheduleRenderAllCharts();
+  }));
+  list.querySelectorAll('[data-delete-constraint]').forEach(btn => btn.addEventListener('click', () => {
+    state.constraints = state.constraints.filter(c => c.id !== btn.dataset.deleteConstraint);
+    resequenceConstraints();
+    renderAll();
+  }));
+}
+
+function renderRestrictionCharts() {
+  const grid = document.getElementById('restrictionChartsGrid');
+  const empty = document.getElementById('restrictionChartsEmpty');
+  const count = Number(state.ui.chartCount || 4);
+  empty.classList.toggle('hidden', state.constraints.length > 0);
+  grid.className = `charts-grid chart-count-${count}`;
+  grid.innerHTML = state.constraints.map(c => `
+    <article class="chart-card">
+      <h3 class="chart-math-title" title="${escapeHtml(constraintMathLabel(c))}">${escapeHtml(constraintMathLabel(c))}</h3>
+      <canvas id="chart_${c.id}"></canvas>
+      <div class="status-line" id="status_${c.id}"></div>
+    </article>
+  `).join('');
+  requestAnimationFrame(() => {
+    scheduleRenderAllCharts();
+    maybeAutoSaveHistory();
+  });
+}
+
+function renderDomain() {
+  document.body.classList.toggle('real-mode', state.domain === 'R');
+}
+
+function renderAll() {
+  renderDomain();
+  renderVariables();
+  renderObjectiveAndConstraints();
+  renderRestrictionCharts();
+  renderHistoryTable();
+  scheduleRenderAllCharts();
+}
+
+function addVariable() {
+  openVariableEditor(null);
+}
+
+function addConstraint() {
+  state.constraints.push(nextConstraintDefaults());
+  renderAll();
+}
+
+function toggleDomain() {
+  state.domain = state.domain === 'Z' ? 'R' : 'Z';
+  if (state.domain === 'Z') {
+    state.variables.forEach(v => { v.value = Math.round(v.value); v.min = Math.round(v.min); v.max = Math.round(v.max); });
+  }
+  renderAll();
+}
+
+function bootEvents() {
+  document.getElementById('domainSwitch').addEventListener('click', toggleDomain);
+  document.getElementById('addVariableBtn').addEventListener('click', addVariable);
+  document.getElementById('addConstraintBtn').addEventListener('click', addConstraint);
+  document.getElementById('objectiveExprField').addEventListener('click', () => openCalculator('objective'));
+  document.getElementById('objectiveSense').addEventListener('change', (e) => {
+    state.objective.sense = e.target.value;
+    renderHistoryTable();
+    maybeAutoSaveHistory();
+  });
+
+  const chartCount = document.getElementById('restrictionChartCount');
+  if (chartCount) {
+    chartCount.value = String(state.ui.chartCount || 4);
+    chartCount.addEventListener('change', (e) => {
+      state.ui.chartCount = Number(e.target.value || 4);
+      state.ui.chartStart = 0;
+      renderRestrictionCharts();
+    });
+  }
+
+  const chartPrev = document.getElementById('restrictionChartPrev');
+  const chartNext = document.getElementById('restrictionChartNext');
+  if (chartPrev) chartPrev.addEventListener('click', () => {
+    state.ui.chartStart = Math.max(0, Number(state.ui.chartStart || 0) - chartVisibleCount());
+    renderRestrictionCharts();
+  });
+  if (chartNext) chartNext.addEventListener('click', () => {
+    state.ui.chartStart = Number(state.ui.chartStart || 0) + chartVisibleCount();
+    renderRestrictionCharts();
+  });
+
+  document.querySelectorAll('[data-flip]').forEach(btn => {
+    btn.addEventListener('click', () => document.getElementById(btn.dataset.flip).classList.toggle('flipped'));
+  });
+
+  document.getElementById('openMatrixBtn').addEventListener('click', () => {
+    renderMatrix();
+    openOverlay('matrixModal');
+  });
+  const matrixNInput = document.getElementById('matrixNInput');
+  const matrixNSlider = document.getElementById('matrixNSlider');
+  if (matrixNInput) matrixNInput.addEventListener('input', () => renderMatrix('input'));
+  if (matrixNSlider) matrixNSlider.addEventListener('input', () => renderMatrix('slider'));
+  document.getElementById('openHistoryBtn').addEventListener('click', () => {
+    renderHistoryTable();
+    openOverlay('historyModal');
+  });
+
+  document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => closeOverlay(btn.dataset.close)));
+  document.querySelectorAll('.overlay').forEach(overlay => {
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) closeOverlay(overlay.id);
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (handleCalculatorKey(event)) return;
+    if (event.key === 'Escape') closeAllOverlays();
+  });
+
+  document.getElementById('saveVariableBtn').addEventListener('click', saveVariable);
+  document.getElementById('deleteVariableBtn').addEventListener('click', deleteVariable);
+  document.getElementById('saveConstantBtn').addEventListener('click', saveConstant);
+  document.getElementById('deleteConstantBtn').addEventListener('click', deleteConstant);
+  document.getElementById('saveCalcBtn').addEventListener('click', saveCalc);
+  document.getElementById('calcBack').addEventListener('click', () => moveCalcCursor(-1));
+  document.getElementById('calcBackObjective').addEventListener('click', () => moveCalcCursor(-1));
+  document.getElementById('calcSpace').addEventListener('click', () => moveCalcCursor(1));
+  document.getElementById('calcSpaceObjective').addEventListener('click', () => moveCalcCursor(1));
+  document.getElementById('calcLeftEntry').addEventListener('click', () => setCalcSide('left'));
+  document.getElementById('calcRightEntry').addEventListener('click', () => setCalcSide('right'));
+  document.getElementById('calcEntry').addEventListener('click', () => setCalcSide('right'));
+  document.getElementById('calcClear').addEventListener('click', clearActiveCalc);
+  document.getElementById('newConstantBtn').addEventListener('click', () => openConstantEditor(null));
+  document.getElementById('varSpeedInput').addEventListener('input', (e) => {
+    document.getElementById('varSpeedLabel').textContent = `x${Number(e.target.value).toFixed(1)}`;
+  });
+
+  window.addEventListener('resize', scheduleRenderAllCharts);
+}
+
+bootModalKeyboards();
+bootEvents();
+renderAll();
+</script>
+</body>
+</html>
