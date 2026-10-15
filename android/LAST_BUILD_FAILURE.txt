@@ -1,63 +1,94 @@
-ter hereof. This Agreement may only be amended or supplemented by a writing that refers explicitly to this Agreement and that is signed or otherwise accepted by duly authorized representatives of Recipient and MIPS.
-2026-10-15T01:55:18.6955579Z 
-2026-10-15T01:55:18.6958203Z 10.5 Severability. In the event that any provision of this Agreement is finally adjudicated to be unenforceable or invalid under any applicable law, such unenforceability or invalidity shall not render this Agreement unenforceable or invalid as a whole, and, in such event, such unenforceable or invalid provision shall be interpreted so as to best accomplish the objectives of such provision within the limits of applicable law or applicable court decisions.
-2026-10-15T01:55:18.6961148Z 
-2026-10-15T01:55:18.6969587Z 10.6 Export Regulations / Export Control. Recipient shall not export, either directly or indirectly, any product, service or technical data or system incorporating the Evaluation Materials without first obtaining any required license or other necessary approval from the U.S. Department of Commerce or any other governing agency or department of the United States Government. In the event any product is exported from the United States or re-exported from a foreign destination by Recipient, Recipient shall ensure that the distribution and export/re-export or import of the product is in compliance with all applicable laws, regulations, orders, or other restrictions of the U.S. Export Administration Regulations and the appropriate foreign government. Recipient agrees that neither it nor any of its subsidiaries will export/re-export any technical data, process, product, or service, directly or indirectly, to any country for which the United States government or any agency thereof or the foreign government from where it is shipping requires an export license, or other governmental approval, without first obtaining such license or approval. Recipient also agrees to implement measures to ensure that foreign national employees are authorized to receive any information controlled by U.S. export control laws. An export is "deemed" to take place when information is released to a foreign national wherever located.
-2026-10-15T01:55:18.6979092Z 
-2026-10-15T01:55:18.6986022Z 10.7 Special Terms for Pre-Release Materials. If so indicated in the description of the Evaluation Software, the Evaluation Software may contain Pre-Release Materials. Recipient hereby understands, acknowledges and agrees that: (i) Pre-Release Materials may not be fully tested and may contain bugs or errors; (ii) Pre-Release materials are not suitable for commercial release in their current state; (iii) regulatory approvals for Pre-Release Materials (such as UL or FCC) have not been obtained, and Pre-Release Materials may therefore not be certified for use in certain countries or environments or may not be suitable for certain applications and (iv) MIPS can provide no assurance that it will ever produce or make generally available a production version of the Pre-Release Materials . MIPS is not under any obligation to develop and/or release or offer for sale or license a final product based upon the Pre-Release Materials and may unilaterally elect to abandon the Pre-Release Materials or any such development platform at any time and without any obligation or liability whatsoever to Recipient or any other person.
-2026-10-15T01:55:18.6993269Z 
-2026-10-15T01:55:18.6994461Z ANY PRE-RELEASE MATERIALS ARE NON-QUALIFIED AND, AS SUCH, ARE PROVIDED “AS IS” AND “AS AVAILABLE”, POSSIBLY WITH FAULTS, AND WITHOUT REPRESENTATION OR WARRANTY OF ANY KIND.
-2026-10-15T01:55:18.6995555Z 
-2026-10-15T01:55:18.6999360Z 10.8 Open Source Software. In the event Open Source software is included with Evaluation Software, such Open Source software is licensed pursuant to the applicable Open Source software license agreement identified in the Open Source software comments in the applicable source code file(s) and/or file header as indicated in the Evaluation Software. Additional detail may be available (where applicable) in the accompanying on-line documentation. With respect to the Open Source software, nothing in this Agreement limits any rights under, or grants rights that supersede, the terms of any applicable Open Source software license agreement.
-2026-10-15T01:55:18.7003563Z ---------------------------------------
-2026-10-15T01:55:18.7004071Z Accept? (y/N): All SDK package licenses accepted
-2026-10-15T01:55:18.7004427Z 
-2026-10-15T01:55:18.7004818Z [command]/usr/local/lib/android/sdk/cmdline-tools/16.0/bin/sdkmanager tools
-2026-10-15T01:55:19.4400425Z Loading package information...                                                  
-2026-10-15T01:55:19.5408745Z Loading local repository...                                                     
-2026-10-15T01:55:19.5417492Z [                                       ] 3% Loading local repository...        
-2026-10-15T01:55:19.5508552Z [                                       ] 3% Fetch remote repository...         
-2026-10-15T01:55:19.8863658Z [=                                      ] 3% Fetch remote repository...         
-2026-10-15T01:55:19.9788887Z [=                                      ] 4% Fetch remote repository...         
-2026-10-15T01:55:20.0208881Z [=                                      ] 5% Fetch remote repository...         
-2026-10-15T01:55:20.0901860Z [==                                     ] 5% Fetch remote repository...         
-2026-10-15T01:55:20.1743156Z [==                                     ] 6% Fetch remote repository...         
-2026-10-15T01:55:20.2432097Z [==                                     ] 7% Fetch remote repository...         
-2026-10-15T01:55:20.2459398Z [==                                     ] 7% Computing updates...               
-2026-10-15T01:55:20.2563708Z [===                                    ] 8% Computing updates...               
-2026-10-15T01:55:20.2564674Z [===                                    ] 10% Computing updates...              
-2026-10-15T01:55:20.2565547Z                                                                                 
-2026-10-15T01:55:20.2566317Z Warning: Failed to find package 'tools'
-2026-10-15T01:55:20.2916154Z /home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1823
-2026-10-15T01:55:20.2917359Z                 error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
-2026-10-15T01:55:20.2917917Z                         ^
-2026-10-15T01:55:20.2918068Z 
-2026-10-15T01:55:20.2918400Z Error: The process '/usr/local/lib/android/sdk/cmdline-tools/16.0/bin/sdkmanager' failed with exit code 1
-2026-10-15T01:55:20.2919769Z     at ExecState._setResult (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1823:25)
-2026-10-15T01:55:20.2921557Z     at ExecState.CheckComplete (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1806:18)
-2026-10-15T01:55:20.2923067Z     at ChildProcess.<anonymous> (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1700:27)
-2026-10-15T01:55:20.2924032Z     at ChildProcess.emit (node:events:509:28)
-2026-10-15T01:55:20.2924562Z     at maybeClose (node:internal/child_process:1141:16)
-2026-10-15T01:55:20.2925196Z     at ChildProcess._handle.onexit (node:internal/child_process:306:5)
-2026-10-15T01:55:20.2925637Z 
-2026-10-15T01:55:20.2925769Z Node.js v24.19.0
-2026-10-15T01:55:20.3012832Z [===                                    ] 10% Computing updates...              
-2026-10-15T01:55:20.3172984Z Post job cleanup.
-2026-10-15T01:55:20.4528357Z (node:2510) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
-2026-10-15T01:55:20.4529695Z (Use `node --trace-deprecation ...` to show where the warning was created)
-2026-10-15T01:55:20.4841797Z Post job cleanup.
-2026-10-15T01:55:20.5832199Z [command]/usr/bin/git version
-2026-10-15T01:55:20.5889549Z git version 2.55.0
-2026-10-15T01:55:20.5933737Z Temporarily overriding HOME='/home/runner/work/_temp/2556fe67-a2df-44e7-8e22-3888d28fab6e' before making global git config changes
-2026-10-15T01:55:20.5939833Z Adding repository directory to the temporary git global config as a safe directory
-2026-10-15T01:55:20.5941529Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/visualizador-v2/visualizador-v2
-2026-10-15T01:55:20.5994021Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
-2026-10-15T01:55:20.6040495Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
-2026-10-15T01:55:20.6391803Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-10-15T01:55:20.6406488Z http.https://github.com/.extraheader
-2026-10-15T01:55:20.6423043Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
-2026-10-15T01:55:20.6480046Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
-2026-10-15T01:55:20.6741135Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-10-15T01:55:20.6791499Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-2026-10-15T01:55:20.7184324Z Cleaning up orphan processes
-2026-10-15T01:55:20.7474380Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, android-actions/setup-android@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+lopment by MIPS and/or MIPS’ suppliers.
+2026-10-15T01:55:53.6133013Z 
+2026-10-15T01:55:53.6136727Z 2. PURPOSE. MIPS desires to make the Evaluation Materials available to Recipient solely for Recipient's internal evaluation of the Evaluation Software to evaluate the desirability of cooperating with MIPS in developing products that are compatible with the Evaluation Software and/or to advise MIPS as to possible modifications to the Evaluation Software. Recipient may not disclose, distribute, modify (except to facilitate the above-mentioned internal evaluation), or make commercial use of the Evaluation Materials or any modifications of the Evaluation Materials.
+2026-10-15T01:55:53.6140340Z 
+2026-10-15T01:55:53.6142846Z THE EVALUATION MATERIALS ARE PROVIDED FOR EVALUATION PURPOSES ONLY AND MAY NOT BE MODIFIED (EXCEPT TO FACILITATE THE INTERNAL EVALUATION) OR DISTRIBUTED BY RECIPIENT OR INCORPORATED INTO RECIPIENT’S PRODUCTS OR SOFTWARE. PLEASE CONTACT A MIPS SALES REPRESENTATIVE TO LEARN ABOUT THE AVAILABILITY AND COST OF A COMMERCIAL VERSION OF THE EVALUATION SOFTWARE.
+2026-10-15T01:55:53.6145293Z 
+2026-10-15T01:55:53.6147008Z 3. TITLE. Title to the Evaluation Materials remains with MIPS or its suppliers. Recipient shall not mortgage, pledge or encumber the Evaluation Materials in any way. Recipient shall return all Evaluation Materials, keeping no copies, upon termination or expiration of this Agreement.
+2026-10-15T01:55:53.6148845Z 
+2026-10-15T01:55:53.6155823Z 4. LICENSE. MIPS grants Recipient a royalty-free, personal, nontransferable, nonexclusive license under its copyrights to use the Evaluation Software only for the purposes described in paragraph 2 above and only for a period beginning on the Effective Date and extending to the first anniversary of the Effective Date (the “Evaluation Period”). Unless otherwise communicated in writing by MIPS to Recipient, to the extent the Evaluation Software is provided in more than one delivery or release (each, a “Release”) the license grant in this Section 4 and the Evaluation Period shall apply to each Release, in which case the Evaluation Period shall begin on the date that the Release is made generally available and continue to the first anniversary of such date. Recipient may not make modifications to the Evaluation Software. Recipient shall not disassemble, reverse-engineer, or decompile any software that is not provided to Recipient in source code form.
+2026-10-15T01:55:53.6162206Z 
+2026-10-15T01:55:53.6162217Z 
+2026-10-15T01:55:53.6164596Z EXCEPT AS PROVIDED HEREIN, NO OTHER LICENSE, EXPRESS OR IMPLIED, BY ESTOPPEL OR OTHERWISE, TO ANY OTHER MIPS INTELLECTUAL PROPERTY RIGHTS IS GRANTED TO THE RECIPIENT. OTHER THAN AS EXPLICITLY SET FORTH IN PARAGRAPH 2 ABOVE, NO RIGHT TO COPY, TO REPRODUCE, TO MODIFY, OR TO CREATE DERIVATIVE WORKS OF, THE EVALUATION MATERIALS IS GRANTED HEREIN.
+2026-10-15T01:55:53.6166816Z 
+2026-10-15T01:55:53.6168374Z 5. NO OBLIGATION. Recipient shall have no duty to purchase or license any product from MIPS. MIPS and its suppliers shall have no obligation to provide support for, or develop a non-evaluation version of, the Evaluation Software or to license any version of it.
+2026-10-15T01:55:53.6170185Z 
+2026-10-15T01:55:53.6177788Z 6. MODIFICATIONS. This Agreement does not obligate Recipient to provide MIPS with comments or suggestions regarding Evaluation Materials. However, should Recipient provide MIPS with comments or suggestions for the modification, correction, improvement or enhancement of (a) the Evaluation Materials or (b) MIPS products or processes which may embody the Evaluation Materials, then Recipient agrees to grant and hereby grants to MIPS a non-exclusive, irrevocable, worldwide, fully paid-up, royalty-free license, with the right to sublicense MIPS’ licensees and customers, under Recipient’s Intellectual property rights, to use and disclose such comments and suggestions in any manner MIPS chooses and to display, perform, copy, make, have made, use, sell, offer to sell, import, and otherwise dispose of MIPS’ and its sublicensee’s products embodying such comments and suggestions in any manner and via any media MIPS chooses, without reference to the source.
+2026-10-15T01:55:53.6184213Z 
+2026-10-15T01:55:53.6187387Z 7. WARRANTY DISCLAIMER. MIPS AND ITS SUPPLIERS MAKE NO WARRANTIES WITH RESPECT TO EVALUATION MATERIALS, EITHER EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR ANY IMPLIED WARRANTY OF NONINFRINGEMENT WITH RESPECT TO THIRD PARTY INTELLECTUAL PROPERTY. RECIPIENT ACKNOWLEDGES AND AGREES THAT THE EVALUATION MATERIALS ARE PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND.
+2026-10-15T01:55:53.6190199Z 
+2026-10-15T01:55:53.6193946Z 8. LIMITATION OF LIABILITY. MIPS AND ITS SUPPLIERS SHALL NOT BE LIABLE FOR ANY PROPERTY DAMAGE, PERSONAL INJURY, LOSS OF PROFITS, INTERRUPTION OF BUSINESS OR FOR ANY DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL OR INCIDENTAL DAMAGES, HOWEVER CAUSED OR ALLEGED, WHETHER FOR BREACH OF WARRANTY, CONTRACT, STRICT LIABILITY OR OTHERWISE, INCLUDING WITHOUT LIMITATION, UNDER TORT OR OTHER LEGAL THEORY. MIPS AND ITS SUPPLIERS DISCLAIM ANY AND ALL LIABILITY, INCLUDING LIABILITY FOR INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS OF ANY KIND RELATING TO THE EVALUATION MATERIALS.
+2026-10-15T01:55:53.6197549Z 
+2026-10-15T01:55:53.6199030Z 9. EXPIRATION. MIPS may terminate this Agreement immediately after a breach by Recipient or otherwise at MIPS’ reasonable discretion and upon five (5) business days’ notice to Recipient.
+2026-10-15T01:55:53.6200382Z 
+2026-10-15T01:55:53.6200542Z 10. GENERAL.
+2026-10-15T01:55:53.6200777Z 
+2026-10-15T01:55:53.6207001Z 10.1 Controlling Law. This Agreement shall be governed by California law excluding its choice of law rules. With the exception of MIPS’ rights to enforce its intellectual property rights and any confidentiality obligations under this Agreement or any licenses distributed with the Evaluation Materials, all disputes and any claims arising under or relating to this Agreement shall be subject to the exclusive jurisdiction and venue of the state and federal courts located in Santa Clara County, California. Each party hereby agrees to jurisdiction and venue in the courts set forth in the preceding sentence. The parties agree that the United Nations Convention on Contracts for the International Sale of Goods is specifically excluded from application to this Agreement. The parties consent to the personal jurisdiction of the above courts.
+2026-10-15T01:55:53.6212366Z 
+2026-10-15T01:55:53.6215693Z 10.2 Remedies. Recipient acknowledges and agrees that any breach of confidentiality obligations under this Agreement or any licenses distributed with the Evaluation Materials, as well as any disclosure, commercialization, or public use of the Evaluation Materials, would cause irreparable injury to MIPS, and therefore Recipient agrees to consent to, and hereby consents to, the grant of an injunction by any court of competent jurisdiction in the event of an actual or threatened breach.
+2026-10-15T01:55:53.6218702Z 
+2026-10-15T01:55:53.6222801Z 10.3 Assignment. Recipient may not delegate, assign or transfer this Agreement, the license granted or any of Recipient’s rights, obligations, or duties hereunder, expressly, by implication, by operation of law, by way of merger (regardless of whether Recipient is the surviving entity) or acquisition, or otherwise and any attempt to do so, without MIPS’ express prior written consent, shall be ineffective, null and void. MIPS may freely assign this Agreement, and its rights and obligations hereunder, in its sole discretion.
+2026-10-15T01:55:53.6226462Z 
+2026-10-15T01:55:53.6229141Z 10.4 Entire Agreement. This Agreement constitutes the entire agreement between Recipient and MIPS and supersedes in their entirety any and all oral or written agreements previously existing between Recipient and MIPS with respect to the subject matter hereof. This Agreement may only be amended or supplemented by a writing that refers explicitly to this Agreement and that is signed or otherwise accepted by duly authorized representatives of Recipient and MIPS.
+2026-10-15T01:55:53.6232125Z 
+2026-10-15T01:55:53.6235286Z 10.5 Severability. In the event that any provision of this Agreement is finally adjudicated to be unenforceable or invalid under any applicable law, such unenforceability or invalidity shall not render this Agreement unenforceable or invalid as a whole, and, in such event, such unenforceable or invalid provision shall be interpreted so as to best accomplish the objectives of such provision within the limits of applicable law or applicable court decisions.
+2026-10-15T01:55:53.6238316Z 
+2026-10-15T01:55:53.6247247Z 10.6 Export Regulations / Export Control. Recipient shall not export, either directly or indirectly, any product, service or technical data or system incorporating the Evaluation Materials without first obtaining any required license or other necessary approval from the U.S. Department of Commerce or any other governing agency or department of the United States Government. In the event any product is exported from the United States or re-exported from a foreign destination by Recipient, Recipient shall ensure that the distribution and export/re-export or import of the product is in compliance with all applicable laws, regulations, orders, or other restrictions of the U.S. Export Administration Regulations and the appropriate foreign government. Recipient agrees that neither it nor any of its subsidiaries will export/re-export any technical data, process, product, or service, directly or indirectly, to any country for which the United States government or any agency thereof or the foreign government from where it is shipping requires an export license, or other governmental approval, without first obtaining such license or approval. Recipient also agrees to implement measures to ensure that foreign national employees are authorized to receive any information controlled by U.S. export control laws. An export is "deemed" to take place when information is released to a foreign national wherever located.
+2026-10-15T01:55:53.6256784Z 
+2026-10-15T01:55:53.6263951Z 10.7 Special Terms for Pre-Release Materials. If so indicated in the description of the Evaluation Software, the Evaluation Software may contain Pre-Release Materials. Recipient hereby understands, acknowledges and agrees that: (i) Pre-Release Materials may not be fully tested and may contain bugs or errors; (ii) Pre-Release materials are not suitable for commercial release in their current state; (iii) regulatory approvals for Pre-Release Materials (such as UL or FCC) have not been obtained, and Pre-Release Materials may therefore not be certified for use in certain countries or environments or may not be suitable for certain applications and (iv) MIPS can provide no assurance that it will ever produce or make generally available a production version of the Pre-Release Materials . MIPS is not under any obligation to develop and/or release or offer for sale or license a final product based upon the Pre-Release Materials and may unilaterally elect to abandon the Pre-Release Materials or any such development platform at any time and without any obligation or liability whatsoever to Recipient or any other person.
+2026-10-15T01:55:53.6271435Z 
+2026-10-15T01:55:53.6272775Z ANY PRE-RELEASE MATERIALS ARE NON-QUALIFIED AND, AS SUCH, ARE PROVIDED “AS IS” AND “AS AVAILABLE”, POSSIBLY WITH FAULTS, AND WITHOUT REPRESENTATION OR WARRANTY OF ANY KIND.
+2026-10-15T01:55:53.6274262Z 
+2026-10-15T01:55:53.6278583Z 10.8 Open Source Software. In the event Open Source software is included with Evaluation Software, such Open Source software is licensed pursuant to the applicable Open Source software license agreement identified in the Open Source software comments in the applicable source code file(s) and/or file header as indicated in the Evaluation Software. Additional detail may be available (where applicable) in the accompanying on-line documentation. With respect to the Open Source software, nothing in this Agreement limits any rights under, or grants rights that supersede, the terms of any applicable Open Source software license agreement.
+2026-10-15T01:55:53.6282882Z ---------------------------------------
+2026-10-15T01:55:53.6283723Z Accept? (y/N): All SDK package licenses accepted
+2026-10-15T01:55:53.6284127Z 
+2026-10-15T01:55:53.6284559Z [command]/usr/local/lib/android/sdk/cmdline-tools/16.0/bin/sdkmanager tools
+2026-10-15T01:55:54.3626638Z Loading package information...                                                  
+2026-10-15T01:55:54.4739652Z Loading local repository...                                                     
+2026-10-15T01:55:54.4755131Z [                                       ] 3% Loading local repository...        
+2026-10-15T01:55:54.4841921Z [                                       ] 3% Fetch remote repository...         
+2026-10-15T01:55:54.7660358Z [=                                      ] 3% Fetch remote repository...         
+2026-10-15T01:55:54.8287582Z [=                                      ] 4% Fetch remote repository...         
+2026-10-15T01:55:54.8663545Z [=                                      ] 5% Fetch remote repository...         
+2026-10-15T01:55:54.9147904Z [==                                     ] 5% Fetch remote repository...         
+2026-10-15T01:55:54.9739310Z [==                                     ] 6% Fetch remote repository...         
+2026-10-15T01:55:55.0250613Z [==                                     ] 7% Fetch remote repository...         
+2026-10-15T01:55:55.0274125Z [==                                     ] 7% Computing updates...               
+2026-10-15T01:55:55.0402180Z [===                                    ] 8% Computing updates...               
+2026-10-15T01:55:55.0403169Z [===                                    ] 10% Computing updates...              
+2026-10-15T01:55:55.0404123Z                                                                                 
+2026-10-15T01:55:55.0404736Z [===                                    ] 10% Computing updates...              
+2026-10-15T01:55:55.0405226Z Warning: Failed to find package 'tools'
+2026-10-15T01:55:55.0658142Z /home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1823
+2026-10-15T01:55:55.0659368Z                 error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+2026-10-15T01:55:55.0660220Z                         ^
+2026-10-15T01:55:55.0660465Z 
+2026-10-15T01:55:55.0660844Z Error: The process '/usr/local/lib/android/sdk/cmdline-tools/16.0/bin/sdkmanager' failed with exit code 1
+2026-10-15T01:55:55.0661631Z     at ExecState._setResult (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1823:25)
+2026-10-15T01:55:55.0662397Z     at ExecState.CheckComplete (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1806:18)
+2026-10-15T01:55:55.0663271Z     at ChildProcess.<anonymous> (/home/runner/work/_actions/android-actions/setup-android/v3/dist/index.js:1700:27)
+2026-10-15T01:55:55.0664488Z     at ChildProcess.emit (node:events:509:28)
+2026-10-15T01:55:55.0664852Z     at maybeClose (node:internal/child_process:1141:16)
+2026-10-15T01:55:55.0665298Z     at ChildProcess._handle.onexit (node:internal/child_process:306:5)
+2026-10-15T01:55:55.0665789Z 
+2026-10-15T01:55:55.0665937Z Node.js v24.19.0
+2026-10-15T01:55:55.0914443Z Post job cleanup.
+2026-10-15T01:55:55.2252284Z (node:2516) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-15T01:55:55.2253689Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-15T01:55:55.2491597Z Post job cleanup.
+2026-10-15T01:55:55.3387164Z [command]/usr/bin/git version
+2026-10-15T01:55:55.3434171Z git version 2.55.0
+2026-10-15T01:55:55.3493291Z Temporarily overriding HOME='/home/runner/work/_temp/6f8132f0-49f8-4230-8ffe-d11252ff36bb' before making global git config changes
+2026-10-15T01:55:55.3495512Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-15T01:55:55.3496679Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/visualizador-v2/visualizador-v2
+2026-10-15T01:55:55.3553936Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-15T01:55:55.3593279Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-15T01:55:55.3855691Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-15T01:55:55.3876502Z http.https://github.com/.extraheader
+2026-10-15T01:55:55.3912017Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-15T01:55:55.3932521Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-15T01:55:55.4185800Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-15T01:55:55.4235132Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-15T01:55:55.4731782Z Cleaning up orphan processes
+2026-10-15T01:55:55.4992359Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4, android-actions/setup-android@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
